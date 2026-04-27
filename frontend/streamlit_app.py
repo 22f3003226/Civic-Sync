@@ -210,7 +210,6 @@ with st.sidebar:
 
     bill_data = BILLS.get(selected_key, {})
     tag = bill_data.get("tag", "Central")
-    prs_link = bill_data.get("prs_link", "")
     st.markdown(
         f'<div style="display:flex;flex-direction:column;gap:0.2rem;">'
         f'<span style="font-size:0.75rem;color:{MUTED_FG};">Bills loaded: <strong style="color:{FG};">{len(BILLS)}</strong></span>'
@@ -219,13 +218,6 @@ with st.sidebar:
         f'</div>',
         unsafe_allow_html=True,
     )
-    if prs_link:
-        st.markdown(
-            f'<a href="{prs_link}" target="_blank" rel="noopener noreferrer" '
-            f'style="font-size:0.75rem;color:#60a5fa;text-decoration:none;">'
-            f'PRS India summary →</a>',
-            unsafe_allow_html=True,
-        )
 
 # ── Tabs ─────────────────────────────────────────────────────────────────────
 tab_explain, tab_browse, tab_rights, tab_conflicts = st.tabs([
@@ -743,31 +735,14 @@ with tab_browse:
 
     import pandas as pd
     if filtered:
-        from app.state_bills import prs_search_url
-        df_raw = pd.DataFrame(filtered)
-        df_display = df_raw[["bill", "state", "date", "chamber"]].copy()
-        df_display.columns = ["Bill Name", "State", "Date", "Legislature"]
-        df_display["PRS India"] = df_raw.apply(
-            lambda r: prs_search_url(r["bill"], r["state"]), axis=1
-        )
-        st.dataframe(
-            df_display.head(500),
-            use_container_width=True,
-            height=400,
-            hide_index=True,
-            column_config={
-                "PRS India": st.column_config.LinkColumn(
-                    "PRS India",
-                    display_text="Search →",
-                    help="Search PRS India for this bill's analysis and summaries",
-                ),
-            },
-        )
+        df = pd.DataFrame(filtered)[["bill","state","date","chamber"]]
+        df.columns = ["Bill Name","State","Date","Legislature"]
+        st.dataframe(df.head(500), use_container_width=True, height=400, hide_index=True)
         if len(filtered) > 500:
             st.caption(f"Showing first 500 of {len(filtered):,}. Narrow filters for more.")
         st.download_button(
             "Download filtered list (CSV)",
-            data=df_display.drop(columns=["PRS India"]).to_csv(index=False).encode(),
+            data=df.to_csv(index=False).encode(),
             file_name="state_bills_filtered.csv",
             mime="text/csv",
         )

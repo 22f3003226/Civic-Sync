@@ -37,14 +37,6 @@ BILL_DISPLAY_NAMES: Dict[str, str] = {
     "maha_rent": "Maharashtra Rent Control Act 1999",
 }
 
-PRS_LINKS: Dict[str, str] = {
-    "dpdp":            "https://prsindia.org/billtrack/the-digital-personal-data-protection-bill-2023",
-    "social_security": "https://prsindia.org/billtrack/the-code-on-social-security-2020",
-    "bns":             "https://prsindia.org/billtrack/the-bharatiya-nyaya-sanhita-2023",
-    "telecom":         "https://prsindia.org/billtrack/the-telecommunications-bill-2023",
-    "maha_rent":       "https://prsindia.org/bills/states",
-}
-
 BILL_TAGS: Dict[str, str] = {
     "dpdp": "Central",
     "social_security": "Central",
@@ -166,7 +158,6 @@ def load_all_bills() -> Dict[str, Dict]:
                 "path": path,
                 "display_name": BILL_DISPLAY_NAMES[key],
                 "tag": BILL_TAGS.get(key, "Central"),
-                "prs_link": PRS_LINKS.get(key, ""),
             }
         except Exception as e:
             print(f"❌ Failed to load {key}: {e}")
