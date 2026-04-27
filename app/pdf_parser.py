@@ -1,6 +1,24 @@
 import re
+import json
+import os
 import pdfplumber
 from typing import List, Dict
+
+CHUNKS_CACHE_PATH = "data/bill_chunks_cache.json"
+
+
+def _load_chunks_cache() -> Dict:
+    try:
+        with open(CHUNKS_CACHE_PATH) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _save_chunks_cache(cache: Dict) -> None:
+    os.makedirs("data", exist_ok=True)
+    with open(CHUNKS_CACHE_PATH, "w") as f:
+        json.dump(cache, f)
 
 
 BILL_PATHS: Dict[str, str] = {
@@ -80,21 +98,48 @@ def chunk_by_section(raw_text: str, bill_key: str = "") -> List[Dict]:
 
 
 def load_all_bills() -> Dict[str, Dict]:
-    """Load and chunk all bills. Returns {bill_key: {text, chunks, display_name}}."""
+    """
+    Load and chunk all bills.
+    On first run: parses PDFs and saves chunks to JSON cache.
+    On subsequent runs: loads from cache (much faster).
+    """
+    cache = _load_chunks_cache()
     bills = {}
+    cache_dirty = False
+
     for key, path in BILL_PATHS.items():
         try:
-            text = extract_bill_text(path)
-            chunks = chunk_by_section(text, key)
+            if key in cache:
+                # Fast path: load from disk cache
+                chunks = cache[key]["chunks"]
+                text = cache[key].get("text_preview", "")
+                print(f"✅ Loaded {key} from cache: {len(chunks)} sections")
+            else:
+                # Slow path: parse PDF and cache result
+                print(f"⏳ Parsing {key} PDF (first run — will be cached)…")
+                text = extract_bill_text(path)
+                chunks = chunk_by_section(text, key)
+                # Store first 10k chars of text for source display
+                cache[key] = {
+                    "chunks": chunks,
+                    "text_preview": text[:50_000],
+                }
+                cache_dirty = True
+                print(f"✅ Parsed {key}: {len(chunks)} sections")
+
             bills[key] = {
-                "text": text,
+                "text": cache[key].get("text_preview", ""),
                 "chunks": chunks,
                 "path": path,
                 "display_name": BILL_DISPLAY_NAMES[key],
             }
-            print(f"✅ Loaded {key}: {len(chunks)} sections")
         except Exception as e:
             print(f"❌ Failed to load {key}: {e}")
+
+    if cache_dirty:
+        _save_chunks_cache(cache)
+        print("💾 Bill chunks cached to data/bill_chunks_cache.json")
+
     return bills
 
 
