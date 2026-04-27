@@ -1,81 +1,107 @@
 """
-shadcn/ui-inspired CSS for Streamlit.
+shadcn/ui dark theme for Streamlit.
 Inject with: st.markdown(SHADCN_CSS, unsafe_allow_html=True)
 """
 
 SHADCN_CSS = """
 <style>
-/* ── Google Font: Inter ────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* ── Fonts: Inter (body) + DM Sans (display) ───────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Sans:wght@500;600;700&display=swap');
 
-/* ── Root tokens (shadcn zinc theme) ──────────────────────────────────── */
+/* ── Dark root tokens (shadcn zinc-dark) ───────────────────────────────── */
 :root {
-  --background:     #ffffff;
-  --foreground:     #09090b;
-  --card:           #ffffff;
-  --card-border:    #e4e4e7;
-  --muted:          #f4f4f5;
-  --muted-fg:       #71717a;
-  --accent:         #18181b;
-  --accent-fg:      #fafafa;
-  --primary:        #18181b;
-  --primary-fg:     #fafafa;
-  --destructive:    #dc2626;
-  --warning:        #d97706;
-  --success:        #16a34a;
-  --border:         #e4e4e7;
-  --radius:         0.5rem;
-  --shadow-sm:      0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow:         0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md:      0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --background:   #09090b;
+  --foreground:   #fafafa;
+  --card:         #18181b;
+  --card-border:  #27272a;
+  --muted:        #27272a;
+  --muted-fg:     #a1a1aa;
+  --accent:       #3f3f46;
+  --border:       #27272a;
+  --primary:      #e4e4e7;
+  --primary-fg:   #09090b;
+  --radius:       0.5rem;
+  --shadow-sm:    0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow:       0 1px 3px 0 rgb(0 0 0 / 0.5);
+  --shadow-md:    0 4px 6px -1px rgb(0 0 0 / 0.5);
+
+  /* Semantic colours */
+  --info-bg:      #0c1a2e;
+  --info-fg:      #93c5fd;
+  --info-border:  #1e3a5f;
+
+  --warn-bg:      #1c1000;
+  --warn-fg:      #fcd34d;
+  --warn-border:  #78350f;
+
+  --err-bg:       #1a0505;
+  --err-fg:       #fca5a5;
+  --err-border:   #7f1d1d;
+
+  --ok-bg:        #052e16;
+  --ok-fg:        #4ade80;
+  --ok-border:    #166534;
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────── */
-html, body, [data-testid="stAppViewContainer"] {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  background-color: #fafafa !important;
+html, body,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="block-container"] {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  background-color: var(--background) !important;
   color: var(--foreground) !important;
 }
 
-[data-testid="stMain"] {
-  background-color: #fafafa !important;
+/* Kill Streamlit default white flashes */
+[data-testid="stApp"],
+[data-testid="stHeader"] {
+  background-color: var(--background) !important;
 }
 
-/* ── Hide Streamlit chrome ────────────────────────────────────────────── */
-#MainMenu, footer, header { visibility: hidden; }
-[data-testid="stDecoration"] { display: none; }
+/* ── Hide chrome ──────────────────────────────────────────────────────── */
+#MainMenu, footer, header,
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"] { display: none !important; }
 
 /* ── Sidebar ──────────────────────────────────────────────────────────── */
 [data-testid="stSidebar"] {
-  background-color: var(--card) !important;
+  background-color: #111113 !important;
   border-right: 1px solid var(--card-border) !important;
+}
+[data-testid="stSidebar"] * {
+  color: var(--foreground) !important;
 }
 [data-testid="stSidebar"] .stSelectbox label,
 [data-testid="stSidebar"] .stRadio label,
-[data-testid="stSidebar"] p {
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] small {
   font-size: 0.8125rem !important;
   color: var(--muted-fg) !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.01em;
-}
-[data-testid="stSidebar"] h2 {
-  font-size: 0.875rem !important;
-  font-weight: 600 !important;
-  color: var(--foreground) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
-/* ── Select boxes ─────────────────────────────────────────────────────── */
+/* ── Selectbox ────────────────────────────────────────────────────────── */
 [data-testid="stSelectbox"] > div > div {
   background: var(--card) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius) !important;
-  box-shadow: var(--shadow-sm) !important;
+  color: var(--foreground) !important;
   font-size: 0.875rem !important;
 }
 [data-testid="stSelectbox"] > div > div:hover {
-  border-color: #a1a1aa !important;
+  border-color: var(--accent) !important;
+}
+
+/* ── Selectbox dropdown popup ─────────────────────────────────────────── */
+[data-testid="stSelectbox"] ul,
+[role="listbox"] {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+}
+[role="option"]:hover,
+[role="option"][aria-selected="true"] {
+  background: var(--muted) !important;
 }
 
 /* ── Text inputs ──────────────────────────────────────────────────────── */
@@ -85,53 +111,60 @@ html, body, [data-testid="stAppViewContainer"] {
   background: var(--card) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius) !important;
-  box-shadow: var(--shadow-sm) !important;
+  color: var(--foreground) !important;
   font-family: 'Inter', sans-serif !important;
   font-size: 0.875rem !important;
-  color: var(--foreground) !important;
   padding: 0.5rem 0.75rem !important;
-  transition: border-color 0.15s ease !important;
+  caret-color: var(--foreground) !important;
+}
+[data-testid="stTextInput"] input::placeholder,
+[data-testid="stTextArea"] textarea::placeholder {
+  color: var(--muted-fg) !important;
 }
 [data-testid="stTextInput"] input:focus,
 [data-testid="stTextArea"] textarea:focus {
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 2px rgb(24 24 27 / 0.1) !important;
+  border-color: #52525b !important;
+  box-shadow: 0 0 0 2px rgb(82 82 91 / 0.3) !important;
   outline: none !important;
 }
 
 /* ── Buttons ──────────────────────────────────────────────────────────── */
 [data-testid="stButton"] button[kind="primary"] {
-  background-color: var(--primary) !important;
+  background: var(--primary) !important;
   color: var(--primary-fg) !important;
   border: 1px solid var(--primary) !important;
   border-radius: var(--radius) !important;
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'DM Sans', sans-serif !important;
   font-size: 0.875rem !important;
-  font-weight: 500 !important;
-  padding: 0.5rem 1rem !important;
+  font-weight: 600 !important;
   box-shadow: var(--shadow-sm) !important;
-  transition: opacity 0.15s ease !important;
-  letter-spacing: 0.01em;
+  transition: opacity 0.15s !important;
 }
-[data-testid="stButton"] button[kind="primary"]:hover {
-  opacity: 0.88 !important;
-}
+[data-testid="stButton"] button[kind="primary"]:hover { opacity: 0.85 !important; }
+
 [data-testid="stButton"] button[kind="secondary"],
 [data-testid="stButton"] button:not([kind]) {
-  background-color: var(--card) !important;
+  background: var(--card) !important;
   color: var(--foreground) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius) !important;
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'DM Sans', sans-serif !important;
   font-size: 0.875rem !important;
   font-weight: 500 !important;
-  padding: 0.5rem 1rem !important;
-  box-shadow: var(--shadow-sm) !important;
-  transition: background-color 0.15s ease !important;
 }
-[data-testid="stButton"] button[kind="secondary"]:hover,
-[data-testid="stButton"] button:not([kind]):hover {
-  background-color: var(--muted) !important;
+[data-testid="stButton"] button:not([kind]):hover,
+[data-testid="stButton"] button[kind="secondary"]:hover {
+  background: var(--muted) !important;
+}
+
+/* ── Download button ──────────────────────────────────────────────────── */
+[data-testid="stDownloadButton"] button {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
 }
 
 /* ── Metric cards ─────────────────────────────────────────────────────── */
@@ -143,148 +176,185 @@ html, body, [data-testid="stAppViewContainer"] {
   box-shadow: var(--shadow-sm) !important;
 }
 [data-testid="stMetricLabel"] {
-  font-size: 0.75rem !important;
+  font-size: 0.6875rem !important;
   font-weight: 500 !important;
   color: var(--muted-fg) !important;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 [data-testid="stMetricValue"] {
+  font-family: 'DM Sans', sans-serif !important;
   font-size: 1.5rem !important;
   font-weight: 700 !important;
   color: var(--foreground) !important;
 }
 
-/* ── Expanders (shadcn Accordion style) ───────────────────────────────── */
+/* ── Expanders ────────────────────────────────────────────────────────── */
 [data-testid="stExpander"] {
   background: var(--card) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius) !important;
-  box-shadow: var(--shadow-sm) !important;
-  margin-bottom: 0.5rem !important;
-  overflow: hidden;
+  margin-bottom: 0.375rem !important;
 }
 [data-testid="stExpander"] summary {
-  font-size: 0.875rem !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.8125rem !important;
   font-weight: 500 !important;
   color: var(--foreground) !important;
-  padding: 0.875rem 1rem !important;
-  background: var(--card) !important;
+  background: transparent !important;
+  padding: 0.75rem 1rem !important;
 }
 [data-testid="stExpander"] summary:hover {
   background: var(--muted) !important;
+  border-radius: var(--radius) !important;
 }
 [data-testid="stExpander"] > div > div {
-  padding: 0 1rem 1rem !important;
+  color: var(--foreground) !important;
+  padding: 0 1rem 0.875rem !important;
 }
 
-/* ── Info / warning / error boxes ────────────────────────────────────── */
+/* ── Info / warning / error ───────────────────────────────────────────── */
 [data-testid="stInfo"] {
-  background: #eff6ff !important;
-  border: 1px solid #bfdbfe !important;
+  background: var(--info-bg) !important;
+  border: 1px solid var(--info-border) !important;
   border-radius: var(--radius) !important;
-  color: #1e40af !important;
+  color: var(--info-fg) !important;
   font-size: 0.875rem !important;
 }
 [data-testid="stWarning"] {
-  background: #fffbeb !important;
-  border: 1px solid #fde68a !important;
+  background: var(--warn-bg) !important;
+  border: 1px solid var(--warn-border) !important;
   border-radius: var(--radius) !important;
-  color: #92400e !important;
+  color: var(--warn-fg) !important;
   font-size: 0.875rem !important;
 }
 [data-testid="stError"] {
-  background: #fef2f2 !important;
-  border: 1px solid #fecaca !important;
+  background: var(--err-bg) !important;
+  border: 1px solid var(--err-border) !important;
   border-radius: var(--radius) !important;
-  color: #991b1b !important;
+  color: var(--err-fg) !important;
   font-size: 0.875rem !important;
+}
+[data-testid="stSuccess"] {
+  background: var(--ok-bg) !important;
+  border: 1px solid var(--ok-border) !important;
+  border-radius: var(--radius) !important;
+  color: var(--ok-fg) !important;
 }
 
 /* ── Tabs ─────────────────────────────────────────────────────────────── */
 [data-testid="stTabs"] [role="tablist"] {
   border-bottom: 1px solid var(--border) !important;
-  gap: 0 !important;
+  background: transparent !important;
 }
 [data-testid="stTabs"] [role="tab"] {
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'DM Sans', sans-serif !important;
   font-size: 0.875rem !important;
   font-weight: 500 !important;
   color: var(--muted-fg) !important;
-  padding: 0.625rem 1rem !important;
+  background: transparent !important;
   border: none !important;
   border-bottom: 2px solid transparent !important;
-  background: transparent !important;
   border-radius: 0 !important;
-  transition: color 0.15s ease !important;
+  padding: 0.625rem 1rem !important;
+  transition: color 0.15s !important;
 }
 [data-testid="stTabs"] [role="tab"][aria-selected="true"] {
   color: var(--foreground) !important;
   border-bottom-color: var(--primary) !important;
-  background: transparent !important;
 }
-[data-testid="stTabs"] [role="tab"]:hover {
-  color: var(--foreground) !important;
+[data-testid="stTabs"] [role="tab"]:hover { color: var(--foreground) !important; }
+[data-testid="stTabs"] [role="tabpanel"] {
+  background: transparent !important;
 }
 
 /* ── Dataframe ────────────────────────────────────────────────────────── */
 [data-testid="stDataFrame"] {
   border: 1px solid var(--border) !important;
   border-radius: var(--radius) !important;
-  overflow: hidden !important;
-  box-shadow: var(--shadow-sm) !important;
 }
+[data-testid="stDataFrame"] iframe {
+  color-scheme: dark;
+}
+
+/* ── Bar chart ────────────────────────────────────────────────────────── */
+[data-testid="stArrowVegaLiteChart"] canvas,
+[data-testid="stVegaLiteChart"] {
+  background: var(--card) !important;
+  border-radius: var(--radius) !important;
+}
+
+/* ── Progress ─────────────────────────────────────────────────────────── */
+[data-testid="stProgress"] > div {
+  background: var(--muted) !important;
+  border-radius: 9999px !important;
+}
+[data-testid="stProgress"] > div > div {
+  background: var(--primary) !important;
+  border-radius: 9999px !important;
+}
+
+/* ── Spinner ──────────────────────────────────────────────────────────── */
+[data-testid="stSpinner"] > div { border-top-color: var(--primary) !important; }
 
 /* ── Divider ──────────────────────────────────────────────────────────── */
-hr {
-  border-color: var(--border) !important;
-  margin: 1.25rem 0 !important;
-}
+hr { border-color: var(--border) !important; }
 
-/* ── Caption / small text ─────────────────────────────────────────────── */
-[data-testid="stCaptionContainer"],
-small, .caption {
+/* ── Markdown text ────────────────────────────────────────────────────── */
+p, li, span, label, small, div {
+  color: var(--foreground);
+}
+[data-testid="stMarkdownContainer"] p {
+  font-size: 0.875rem !important;
+  line-height: 1.6 !important;
+  color: var(--foreground) !important;
+}
+[data-testid="stCaptionContainer"] p,
+.stCaption p {
   font-size: 0.75rem !important;
   color: var(--muted-fg) !important;
 }
 
-/* ── Progress bar ─────────────────────────────────────────────────────── */
-[data-testid="stProgress"] > div > div {
-  background-color: var(--primary) !important;
-  border-radius: 9999px !important;
-}
-[data-testid="stProgress"] > div {
-  background-color: var(--muted) !important;
-  border-radius: 9999px !important;
-}
-
-/* ── Radio buttons ────────────────────────────────────────────────────── */
-[data-testid="stRadio"] label {
-  font-size: 0.875rem !important;
-}
-
-/* ── Download button ──────────────────────────────────────────────────── */
-[data-testid="stDownloadButton"] button {
-  background: var(--card) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius) !important;
-  font-size: 0.875rem !important;
-  font-weight: 500 !important;
+/* ── Headings ─────────────────────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: 'DM Sans', sans-serif !important;
   color: var(--foreground) !important;
-  box-shadow: var(--shadow-sm) !important;
-}
-
-/* ── Page heading ─────────────────────────────────────────────────────── */
-h1 {
-  font-size: 1.5rem !important;
-  font-weight: 700 !important;
   letter-spacing: -0.02em !important;
-  color: var(--foreground) !important;
 }
+h1 { font-size: 1.5rem !important; font-weight: 700 !important; }
 h2 { font-size: 1.25rem !important; font-weight: 600 !important; }
-h3 { font-size: 1rem !important; font-weight: 600 !important; }
+h3 { font-size: 1rem   !important; font-weight: 600 !important; }
 
-/* ── shadcn Card utility (used in HTML blocks) ────────────────────────── */
+/* ── Radio ────────────────────────────────────────────────────────────── */
+[data-testid="stRadio"] label span {
+  color: var(--foreground) !important;
+  font-size: 0.875rem !important;
+}
+
+/* ── Number input arrows ──────────────────────────────────────────────── */
+[data-testid="stNumberInput"] button {
+  background: var(--muted) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+
+/* ── Text area disabled (source text) ────────────────────────────────── */
+[data-testid="stTextArea"] textarea:disabled {
+  background: #111113 !important;
+  color: #a1a1aa !important;
+  border-color: var(--border) !important;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.7 !important;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Utility classes ──────────────────────────────────────────────────── */
 .sh-card {
   background: var(--card);
   border: 1px solid var(--card-border);
@@ -293,36 +363,52 @@ h3 { font-size: 1rem !important; font-weight: 600 !important; }
   padding: 1.25rem 1.5rem;
   margin-bottom: 0.75rem;
 }
+.sh-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
 .sh-badge {
   display: inline-flex;
   align-items: center;
   border-radius: 9999px;
-  padding: 0.125rem 0.625rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1.5;
+  padding: 0.1875rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
-.sh-badge-green  { background:#dcfce7; color:#15803d; }
-.sh-badge-amber  { background:#fef9c3; color:#a16207; }
-.sh-badge-red    { background:#fee2e2; color:#b91c1c; }
-.sh-badge-zinc   { background:#f4f4f5; color:#52525b; }
+.sh-badge-green  { background: #052e16; color: #4ade80; }
+.sh-badge-amber  { background: #1c0f00; color: #fbbf24; }
+.sh-badge-red    { background: #1a0505; color: #f87171; }
+.sh-badge-zinc   { background: #27272a; color: #a1a1aa; }
+.sh-badge-blue   { background: #0c1a2e; color: #60a5fa; }
 </style>
 """
 
+# ── Colour constants for inline HTML ──────────────────────────────────────
+BG       = "#09090b"
+CARD     = "#18181b"
+BORDER   = "#27272a"
+FG       = "#fafafa"
+MUTED_FG = "#a1a1aa"
+ACCENT   = "#3f3f46"
+
 
 def notice_html(text: str, kind: str = "info") -> str:
-    """Return a styled HTML notice block (info | warning | error | success)."""
     colours = {
-        "info":    ("#eff6ff", "#1d4ed8", "#bfdbfe"),
-        "warning": ("#fffbeb", "#b45309", "#fde68a"),
-        "error":   ("#fef2f2", "#b91c1c", "#fecaca"),
-        "success": ("#f0fdf4", "#15803d", "#bbf7d0"),
+        "info":    ("#0c1a2e", "#93c5fd", "#1e3a5f"),
+        "warning": ("#1c1000", "#fcd34d", "#78350f"),
+        "error":   ("#1a0505", "#fca5a5", "#7f1d1d"),
+        "success": ("#052e16", "#4ade80", "#166534"),
     }
     bg, fg, border = colours.get(kind, colours["info"])
     return (
         f'<div style="background:{bg};color:{fg};border:1px solid {border};'
-        f'border-radius:0.5rem;padding:0.875rem 1rem;font-size:0.875rem;'
-        f'font-family:Inter,sans-serif;margin:0.5rem 0;">{text}</div>'
+        f'border-radius:0.5rem;padding:0.875rem 1rem;font-size:0.8125rem;'
+        f'font-family:Inter,sans-serif;line-height:1.5;margin:0.5rem 0;">'
+        f'{text}</div>'
     )
 
 
@@ -330,14 +416,19 @@ def badge_html(text: str, kind: str = "zinc") -> str:
     return f'<span class="sh-badge sh-badge-{kind}">{text}</span>'
 
 
-def verdict_card_html(icon: str, label: str, headline: str,
-                      bg: str, fg: str) -> str:
+def label_html(text: str) -> str:
     return (
-        f'<div class="sh-card" style="border-left:4px solid {fg};">'
-        f'<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">'
-        f'<span style="font-size:1.1rem;">{icon}</span>'
-        f'<span style="font-weight:600;font-size:0.875rem;color:{fg};">{label}</span>'
-        f'</div>'
-        f'<p style="margin:0;font-size:0.875rem;color:#18181b;">{headline}</p>'
+        f'<p class="sh-label" style="margin:1rem 0 0.4rem;">{text}</p>'
+    )
+
+
+def verdict_card_html(icon: str, label: str, headline: str, bg: str, fg: str) -> str:
+    return (
+        f'<div class="sh-card" style="border-left:3px solid {fg};padding:1rem 1.25rem;">'
+        f'<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.375rem;">'
+        f'<span style="font-size:1rem;">{icon}</span>'
+        f'<span style="font-family:DM Sans,sans-serif;font-weight:600;'
+        f'font-size:0.8125rem;color:{fg};">{label}</span></div>'
+        f'<p style="margin:0;font-size:0.875rem;color:{FG};">{headline}</p>'
         f'</div>'
     )

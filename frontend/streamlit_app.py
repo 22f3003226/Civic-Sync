@@ -1,6 +1,6 @@
 """
 Policy Explainer — Indian Legislation in Plain Language
-Streamlit frontend with shadcn-inspired design and security guardrails.
+Dark-mode Streamlit frontend with shadcn-inspired design.
 """
 
 import sys
@@ -24,10 +24,11 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Inject shadcn CSS ───────────────────────────────────────────────────────
-from frontend.theme import SHADCN_CSS, notice_html, badge_html, verdict_card_html
+from frontend.theme import (
+    SHADCN_CSS, notice_html, badge_html, label_html,
+    CARD, BORDER, FG, MUTED_FG, ACCENT,
+)
 st.markdown(SHADCN_CSS, unsafe_allow_html=True)
-
 
 # ── Resource loaders ────────────────────────────────────────────────────────
 @st.cache_resource(show_spinner="Loading bills & building search indexes…")
@@ -47,17 +48,17 @@ def load_state_bills_data():
 
 # ── Header ──────────────────────────────────────────────────────────────────
 st.markdown(
-    """
-<div style="border-bottom:1px solid #e4e4e7;padding-bottom:1rem;margin-bottom:1.25rem;">
+    f"""
+<div style="border-bottom:1px solid {BORDER};padding-bottom:1rem;margin-bottom:1.25rem;">
   <div style="display:flex;align-items:center;gap:0.75rem;">
-    <span style="font-size:1.75rem;">🏛️</span>
+    <span style="font-size:1.75rem;line-height:1;">🏛️</span>
     <div>
-      <h1 style="margin:0;font-size:1.375rem;font-weight:700;
-                 letter-spacing:-0.02em;color:#09090b;">
+      <h1 style="margin:0;font-family:'DM Sans',sans-serif;font-size:1.375rem;
+                 font-weight:700;letter-spacing:-0.025em;color:{FG};">
         Policy Explainer
       </h1>
-      <p style="margin:0;font-size:0.8125rem;color:#71717a;">
-        Indian legislation in plain language · Powered by Claude Sonnet 4.6 + Haiku 4.5
+      <p style="margin:0;font-size:0.8125rem;color:{MUTED_FG};">
+        Indian legislation in plain language · Claude Sonnet 4.6 + Haiku 4.5
       </p>
     </div>
   </div>
@@ -66,7 +67,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ── Legal notice banner ─────────────────────────────────────────────────────
+# ── Legal notice ─────────────────────────────────────────────────────────────
 st.markdown(
     notice_html(
         "<strong>Information notice — not legal advice.</strong> "
@@ -86,19 +87,14 @@ except Exception as e:
 
 # ── Sidebar ─────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown(
-        '<p style="font-size:0.75rem;font-weight:600;color:#71717a;'
-        'text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">'
-        'SETTINGS</p>',
-        unsafe_allow_html=True,
-    )
+    st.markdown(label_html("SETTINGS"), unsafe_allow_html=True)
 
     BILL_OPTIONS = {
-        "dpdp":           "DPDP Act 2023 — Data Protection",
+        "dpdp":            "DPDP Act 2023 — Data Protection",
         "social_security": "Code on Social Security 2020",
-        "bns":            "Bharatiya Nyaya Sanhita 2023",
-        "telecom":        "Telecommunications Act 2023",
-        "maha_rent":      "Maharashtra Rent Control Act 1999 ★",
+        "bns":             "Bharatiya Nyaya Sanhita 2023",
+        "telecom":         "Telecommunications Act 2023",
+        "maha_rent":       "Maharashtra Rent Control Act 1999 ★",
     }
     selected_key = st.selectbox(
         "Bill",
@@ -107,21 +103,15 @@ with st.sidebar:
     )
 
     PERSONAS = [
-        "General User",
-        "Gig Worker",
-        "Farmer",
-        "Small Business Owner",
-        "Student",
-        "Tenant",
-        "Other (Custom)",
+        "General User", "Gig Worker", "Farmer",
+        "Small Business Owner", "Student", "Tenant", "Other (Custom)",
     ]
     selected_persona = st.selectbox("Who are you?", PERSONAS)
 
     custom_persona = ""
     if selected_persona == "Other (Custom)":
         st.markdown(
-            '<p style="font-size:0.8125rem;color:#71717a;margin:0.25rem 0;">'
-            'Describe yourself for a personalised explanation:</p>',
+            f'<p style="font-size:0.8125rem;color:{MUTED_FG};margin:0.25rem 0 0.375rem;">',
             unsafe_allow_html=True,
         )
         custom_persona = st.text_area(
@@ -133,20 +123,19 @@ with st.sidebar:
             label_visibility="collapsed",
         )
         if not custom_persona.strip():
-            st.warning("Please describe yourself to get a personalised explanation.")
+            st.warning("Please describe yourself for a personalised explanation.")
 
     language = st.radio("Language", ["English", "Hindi"])
 
     st.divider()
 
-    # Stats
     bill_data = BILLS.get(selected_key, {})
     tag = bill_data.get("tag", "Central")
     st.markdown(
-        f'<div style="display:flex;flex-direction:column;gap:0.25rem;">'
-        f'<span style="font-size:0.75rem;color:#71717a;">Bills loaded: <strong>{len(BILLS)}</strong></span>'
-        f'<span style="font-size:0.75rem;color:#71717a;">Sections: <strong>{len(bill_data.get("chunks", []))}</strong></span>'
-        f'<span style="font-size:0.75rem;color:#71717a;">Type: <strong>{tag}</strong></span>'
+        f'<div style="display:flex;flex-direction:column;gap:0.2rem;">'
+        f'<span style="font-size:0.75rem;color:{MUTED_FG};">Bills loaded: <strong style="color:{FG};">{len(BILLS)}</strong></span>'
+        f'<span style="font-size:0.75rem;color:{MUTED_FG};">Sections: <strong style="color:{FG};">{len(bill_data.get("chunks",[]))}</strong></span>'
+        f'<span style="font-size:0.75rem;color:{MUTED_FG};">Type: <strong style="color:{FG};">{tag}</strong></span>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -160,34 +149,30 @@ tab_explain, tab_browse = st.tabs(["Explain a Law", "Browse State Bills"])
 # ════════════════════════════════════════════════════════════════════════════
 with tab_explain:
 
-    # ── Query box ─────────────────────────────────────────────────────────
     query = st.text_input(
         "Your question",
-        placeholder="e.g. What is personal data?  What rights do I have?",
+        placeholder="e.g. What is personal data?  What rights do I have as a tenant?",
         key="query_input",
         label_visibility="collapsed",
     )
 
     btn_col, clr_col = st.columns([3, 1])
     with btn_col:
-        search_clicked = st.button(
-            "Get Explanation", type="primary", use_container_width=True
-        )
+        search_clicked = st.button("Get Explanation", type="primary", use_container_width=True)
     with clr_col:
         if st.button("Clear", use_container_width=True):
             for k in ["last_result", "last_query", "last_bill", "verdict_results"]:
                 st.session_state.pop(k, None)
             st.rerun()
 
-    # ── Security: sanitize input ──────────────────────────────────────────
+    # ── Query runner ──────────────────────────────────────────────────────
     def run_query(bill_key: str, query_text: str, persona: str = "") -> dict:
         from app.llm_handler import summarize_with_citations, verify_with_haiku
         from app.sanitizer import sanitize_persona, check_output_prescriptive
         import textstat
 
         persona = sanitize_persona(persona)
-        retriever = RETRIEVERS[bill_key]
-        results = retriever.retrieve(query_text, top_k=3)
+        results = RETRIEVERS[bill_key].retrieve(query_text, top_k=3)
         if not results:
             raise ValueError("No relevant sections found.")
 
@@ -198,30 +183,24 @@ with tab_explain:
         )
         summary_json = sonnet["summary"]
 
-        # Post-output prescriptive check
-        prescriptive_flags = check_output_prescriptive(summary_json)
-        if prescriptive_flags:
-            summary_json.setdefault("common_misconceptions", [])
-            summary_json["_prescriptive_flags"] = prescriptive_flags
+        pf = check_output_prescriptive(summary_json)
+        if pf:
+            summary_json["_prescriptive_flags"] = pf
 
         try:
             haiku = verify_with_haiku(top["text"], summary_json)
         except Exception as e:
-            haiku = {
-                "overall_faithfulness_score": None,
-                "requires_human_review": True,
-                "red_flags": [str(e)],
-            }
+            haiku = {"overall_faithfulness_score": None,
+                     "requires_human_review": True, "red_flags": [str(e)]}
 
-        text_blob = " ".join([
+        blob = " ".join([
             summary_json.get("tl_dr", ""),
             summary_json.get("purpose", ""),
             " ".join(p.get("provision", "") for p in summary_json.get("key_provisions", [])),
         ])
         summary_json["grade_level"] = round(
-            textstat.flesch_kincaid_grade(text_blob) if text_blob.strip() else 8.0, 1
+            textstat.flesch_kincaid_grade(blob) if blob.strip() else 8.0, 1
         )
-
         return {
             "section": top["section"],
             "source_text": top["text"],
@@ -234,68 +213,60 @@ with tab_explain:
 
     if search_clicked and query.strip():
         from app.sanitizer import sanitize_query
-        clean_query, warning = sanitize_query(query.strip())
-
-        if warning and not clean_query:
-            st.error(warning)
+        clean_q, warn = sanitize_query(query.strip())
+        if warn and not clean_q:
+            st.error(warn)
         else:
-            if warning:
-                st.markdown(notice_html(warning, "warning"), unsafe_allow_html=True)
-
-            with st.spinner("Retrieving sections · Generating explanation · Verifying accuracy…"):
+            if warn:
+                st.markdown(notice_html(warn, "warning"), unsafe_allow_html=True)
+            with st.spinner("Retrieving · Summarising · Verifying…"):
                 try:
-                    result = run_query(selected_key, clean_query, custom_persona)
+                    res = run_query(selected_key, clean_q, custom_persona)
                     st.session_state.update({
-                        "last_result": result,
-                        "last_query": clean_query,
+                        "last_result": res, "last_query": clean_q,
                         "last_bill": selected_key,
                     })
                     st.session_state.pop("verdict_results", None)
                 except Exception as e:
                     st.error(f"Error: {e}")
                     st.session_state.pop("last_result", None)
-
     elif search_clicked:
         st.warning("Please enter a question first.")
 
-    # ── Results ───────────────────────────────────────────────────────────
+    # ── Results display ───────────────────────────────────────────────────
     if "last_result" in st.session_state:
         result = st.session_state["last_result"]
         summary = result["summary"]
 
-        st.markdown('<div style="margin-top:1.25rem;"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="margin-top:1rem;"></div>', unsafe_allow_html=True)
 
-        # ── Stat bar ──────────────────────────────────────────────────────
+        # ── Stat card row ─────────────────────────────────────────────────
         grade = summary.get("grade_level", "—")
         score = result.get("faithfulness_score")
-        score_display = f"{score:.1f}/5" if score is not None else "N/A"
-        score_colour = "#16a34a" if (score or 0) >= 4.0 else "#dc2626"
+        score_str = f"{score:.1f}/5" if score is not None else "N/A"
+        score_col = "#4ade80" if (score or 0) >= 4.0 else "#f87171"
 
         st.markdown(
             f"""
-<div class="sh-card" style="display:flex;align-items:center;justify-content:space-between;
-     flex-wrap:wrap;gap:1rem;padding:1rem 1.5rem;">
+<div class="sh-card" style="display:flex;align-items:center;
+     justify-content:space-between;flex-wrap:wrap;gap:1rem;padding:1rem 1.5rem;">
   <div>
-    <p style="margin:0;font-size:0.75rem;color:#71717a;font-weight:500;
-              text-transform:uppercase;letter-spacing:0.05em;">Section</p>
-    <p style="margin:0;font-size:1rem;font-weight:600;color:#09090b;">
-      {result['section']}
-    </p>
+    <p class="sh-label" style="margin:0 0 0.2rem;">Section</p>
+    <p style="margin:0;font-family:'DM Sans',sans-serif;font-size:1rem;
+              font-weight:600;color:{FG};">{result['section']}</p>
   </div>
-  <div style="display:flex;gap:2rem;">
-    <div style="text-align:center;">
-      <p style="margin:0;font-size:0.75rem;color:#71717a;font-weight:500;
-                text-transform:uppercase;letter-spacing:0.05em;">Reading Grade</p>
-      <p style="margin:0;font-size:1.375rem;font-weight:700;color:#09090b;">
-        {grade}<span style="font-size:0.875rem;color:#71717a;">/18</span>
+  <div style="display:flex;gap:2.5rem;">
+    <div style="text-align:right;">
+      <p class="sh-label" style="margin:0 0 0.2rem;">Reading Grade</p>
+      <p style="margin:0;font-family:'DM Sans',sans-serif;font-size:1.5rem;
+                font-weight:700;color:{FG};">
+        {grade}<span style="font-size:0.875rem;color:{MUTED_FG};">/18</span>
       </p>
     </div>
-    <div style="text-align:center;">
-      <p style="margin:0;font-size:0.75rem;color:#71717a;font-weight:500;
-                text-transform:uppercase;letter-spacing:0.05em;">AI Accuracy</p>
-      <p style="margin:0;font-size:1.375rem;font-weight:700;color:{score_colour};">
-        {score_display}
-      </p>
+    <div style="text-align:right;">
+      <p class="sh-label" style="margin:0 0 0.2rem;">AI Accuracy</p>
+      <p style="margin:0;font-family:'DM Sans',sans-serif;font-size:1.5rem;
+                font-weight:700;color:{score_col};">{score_str}</p>
     </div>
   </div>
 </div>
@@ -308,13 +279,11 @@ with tab_explain:
                 notice_html("Faithfulness score below threshold — treat with extra caution.", "warning"),
                 unsafe_allow_html=True,
             )
-
-        # ── Prescriptive output flag ───────────────────────────────────────
         if summary.get("_prescriptive_flags"):
             st.markdown(
                 notice_html(
-                    "The AI summary contained prescriptive language ('you should…') which was flagged. "
-                    "The information below is for awareness only — not a recommendation.",
+                    "The summary contained prescriptive language ('you should…') and was flagged. "
+                    "This is information only — not a personal recommendation.",
                     "warning",
                 ),
                 unsafe_allow_html=True,
@@ -324,90 +293,85 @@ with tab_explain:
         left, right = st.columns([1, 1], gap="large")
 
         with left:
-            tl_dr = summary.get("tl_dr", "")
+            tl_dr   = summary.get("tl_dr", "")
             purpose = summary.get("purpose", "")
 
+            # TL;DR card
             st.markdown(
-                f'<div class="sh-card" style="background:#eff6ff;border-color:#bfdbfe;">'
-                f'<p style="margin:0 0 0.25rem;font-size:0.75rem;font-weight:600;'
-                f'color:#1d4ed8;text-transform:uppercase;letter-spacing:0.05em;">TL;DR</p>'
-                f'<p style="margin:0;font-size:0.9375rem;font-weight:500;color:#1e3a5f;">{tl_dr}</p>'
+                f'<div class="sh-card" style="border-left:3px solid #3b82f6;'
+                f'padding:1rem 1.25rem;margin-bottom:0.75rem;">'
+                f'<p class="sh-label" style="margin:0 0 0.3rem;color:#60a5fa;">TL;DR</p>'
+                f'<p style="margin:0;font-family:\'DM Sans\',sans-serif;font-size:0.9375rem;'
+                f'font-weight:600;color:{FG};line-height:1.4;">{tl_dr}</p>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
 
             if purpose:
                 st.markdown(
-                    f'<p style="font-size:0.875rem;color:#3f3f46;margin:0.75rem 0;">{purpose}</p>',
+                    f'<p style="font-size:0.875rem;color:#d4d4d8;line-height:1.6;'
+                    f'margin:0 0 0.75rem;">{purpose}</p>',
                     unsafe_allow_html=True,
                 )
 
+            # Key Provisions
             provisions = summary.get("key_provisions", [])
             if provisions:
-                st.markdown(
-                    '<p style="font-size:0.75rem;font-weight:600;color:#71717a;'
-                    'text-transform:uppercase;letter-spacing:0.05em;margin:1rem 0 0.5rem;">'
-                    'KEY PROVISIONS</p>',
-                    unsafe_allow_html=True,
-                )
+                st.markdown(label_html("KEY PROVISIONS"), unsafe_allow_html=True)
                 for prov in provisions:
-                    with st.expander(f"{prov.get('provision', '')[:75]}…"):
-                        st.markdown(f"**Rule:** {prov.get('provision', '')}")
+                    with st.expander(f"{prov.get('provision','')[:72]}…"):
+                        st.markdown(f"**Rule:** {prov.get('provision','')}")
                         st.markdown(
-                            f'<span style="font-size:0.75rem;background:#f4f4f5;'
+                            f'<code style="background:#27272a;color:#a1a1aa;'
                             f'padding:0.125rem 0.5rem;border-radius:0.25rem;'
-                            f'color:#52525b;">{prov.get("source_section","")}</span>',
+                            f'font-size:0.75rem;">{prov.get("source_section","")}</code>',
                             unsafe_allow_html=True,
                         )
                         eg = prov.get("concrete_example", "")
                         if eg:
                             st.markdown(
-                                f'<p style="font-size:0.8125rem;color:#3f3f46;'
-                                f'border-left:3px solid #e4e4e7;padding-left:0.75rem;'
-                                f'margin-top:0.5rem;">{eg}</p>',
+                                f'<p style="font-size:0.8125rem;color:#a1a1aa;'
+                                f'border-left:2px solid #3f3f46;padding-left:0.75rem;'
+                                f'margin-top:0.5rem;line-height:1.5;">{eg}</p>',
                                 unsafe_allow_html=True,
                             )
 
+            # Persona impacts
             impacts = summary.get("persona_impacts", [])
-            show_impacts = [
-                i for i in impacts
-                if i.get("persona", "").lower() in (selected_persona.lower(), "general user")
-            ] or impacts
-
-            if show_impacts:
+            show = ([i for i in impacts
+                     if i.get("persona","").lower() in
+                        (selected_persona.lower(), "general user")]
+                    or impacts)
+            if show:
                 st.markdown(
-                    f'<p style="font-size:0.75rem;font-weight:600;color:#71717a;'
-                    f'text-transform:uppercase;letter-spacing:0.05em;margin:1rem 0 0.5rem;">'
-                    f'FOR {selected_persona.upper()}</p>',
+                    label_html(f"FOR {selected_persona.upper()}"),
                     unsafe_allow_html=True,
                 )
-                for imp in show_impacts:
-                    with st.expander(f"{imp.get('persona', selected_persona)}"):
+                for imp in show:
+                    with st.expander(imp.get("persona", selected_persona)):
                         st.markdown(imp.get("concrete_impact", ""))
                         tl = imp.get("timeline")
                         if tl:
                             st.markdown(
-                                f'<span style="font-size:0.75rem;color:#71717a;">Timeline: {tl}</span>',
+                                f'<span style="font-size:0.75rem;color:{MUTED_FG};">'
+                                f'Timeline: {tl}</span>',
                                 unsafe_allow_html=True,
                             )
                         info = imp.get("no_recommendation_only_info")
                         if info:
-                            st.markdown(
-                                notice_html(info, "info"), unsafe_allow_html=True
-                            )
+                            st.markdown(notice_html(info, "info"), unsafe_allow_html=True)
 
+            # Misconceptions
             misconceptions = summary.get("common_misconceptions", [])
             if misconceptions:
                 with st.expander("Common Misconceptions"):
                     for m in misconceptions:
                         st.markdown(f"- {m}")
 
+            # Hindi
             if language == "Hindi":
-                st.markdown("---")
-                st.markdown(
-                    '<p style="font-weight:600;">हिंदी अनुवाद</p>',
-                    unsafe_allow_html=True,
-                )
+                st.divider()
+                st.markdown(label_html("हिंदी अनुवाद"), unsafe_allow_html=True)
                 with st.spinner("Translating via Bhashini…"):
                     try:
                         from app.translator import translate_to_hindi
@@ -420,15 +384,10 @@ with tab_explain:
                         st.caption(f"Hindi translation unavailable: {e}")
 
         with right:
-            st.markdown(
-                '<p style="font-size:0.75rem;font-weight:600;color:#71717a;'
-                'text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">'
-                'SOURCE TEXT</p>',
-                unsafe_allow_html=True,
-            )
+            st.markdown(label_html("SOURCE TEXT"), unsafe_allow_html=True)
             st.caption(BILLS[st.session_state["last_bill"]]["display_name"])
             st.text_area(
-                label="Original bill text",
+                label="Source",
                 value=result.get("source_text", "")[:3000],
                 height=480,
                 disabled=True,
@@ -439,81 +398,61 @@ with tab_explain:
         # ── Ambiguities ───────────────────────────────────────────────────
         ambiguities = summary.get("ambiguities", [])
         if ambiguities:
-            st.markdown(
-                '<p style="font-size:0.75rem;font-weight:600;color:#71717a;'
-                'text-transform:uppercase;letter-spacing:0.05em;margin:1.25rem 0 0.25rem;">'
-                'UNCLEAR CLAUSES</p>',
-                unsafe_allow_html=True,
-            )
-            st.caption("These clauses have more than one possible meaning. Even lawyers disagree.")
+            st.markdown(label_html("UNCLEAR CLAUSES"), unsafe_allow_html=True)
+            st.caption("These clauses have more than one possible meaning. Lawyers disagree on how to read them.")
             for i, amb in enumerate(ambiguities, 1):
                 clause = amb.get("ambiguous_text", "Unclear clause")
-                with st.expander(f"Unclear part {i} — {clause[:65]}…"):
+                with st.expander(f"Clause {i} — {clause[:65]}…"):
                     st.markdown(
-                        f'<blockquote style="border-left:3px solid #e4e4e7;'
-                        f'padding-left:0.75rem;color:#52525b;font-style:italic;">'
-                        f'{clause}</blockquote>',
+                        f'<blockquote style="border-left:2px solid {ACCENT};'
+                        f'padding-left:0.75rem;color:{MUTED_FG};'
+                        f'font-style:italic;margin:0 0 0.75rem;">{clause}</blockquote>',
                         unsafe_allow_html=True,
                     )
-                    st.markdown(f"**Reading A:** {amb.get('interpretation_1', '')}")
+                    st.markdown(f"**Reading A:** {amb.get('interpretation_1','')}")
                     if amb.get("interpretation_2"):
-                        st.markdown(f"**Reading B:** {amb.get('interpretation_2', '')}")
+                        st.markdown(f"**Reading B:** {amb['interpretation_2']}")
                     if amb.get("expert_note"):
-                        st.markdown(
-                            notice_html(amb["expert_note"], "info"),
-                            unsafe_allow_html=True,
-                        )
+                        st.markdown(notice_html(amb["expert_note"], "info"), unsafe_allow_html=True)
 
         # ── Accuracy warnings ─────────────────────────────────────────────
         red_flags = result.get("red_flags", [])
-        _ERR_HINTS = ("line ", "column ", "char ", "Expecting", "JSONDecodeError",
-                      "json", "delimiter", "Unterminated", "truncated")
-        parse_errors = [f for f in red_flags if any(h.lower() in f.lower() for h in _ERR_HINTS)]
-        real_flags = [f for f in red_flags if f not in parse_errors]
+        _ERR = ("line ", "column ", "char ", "Expecting", "JSONDecodeError",
+                "json", "delimiter", "Unterminated", "truncated")
+        parse_errs = [f for f in red_flags if any(h.lower() in f.lower() for h in _ERR)]
+        real_flags = [f for f in red_flags if f not in parse_errs]
 
-        if parse_errors:
+        if parse_errs:
             with st.expander("AI Checker Could Not Run"):
-                st.caption(
-                    "The accuracy checker (Haiku) could not verify this summary. "
-                    "Treat the summary above with extra care."
-                )
+                st.caption("Haiku could not verify this summary. Treat it with extra care.")
         if real_flags:
             with st.expander("Accuracy Warnings"):
-                st.caption("Haiku flagged these potential issues in the summary:")
+                st.caption("Haiku flagged these potential issues:")
                 for flag in real_flags:
-                    st.markdown(
-                        notice_html(flag, "error"), unsafe_allow_html=True
-                    )
+                    st.markdown(notice_html(flag, "error"), unsafe_allow_html=True)
 
         # ── Policy Verdict Panel ──────────────────────────────────────────
-        st.markdown(
-            '<p style="font-size:0.75rem;font-weight:600;color:#71717a;'
-            'text-transform:uppercase;letter-spacing:0.05em;margin:1.25rem 0 0.25rem;">'
-            'POLICY VERDICT — 5 PERSPECTIVES</p>',
-            unsafe_allow_html=True,
-        )
+        st.markdown(label_html("POLICY VERDICT — 5 PERSPECTIVES"), unsafe_allow_html=True)
         st.caption(
-            "Five Haiku agents — Economist, Social Worker, Legal Expert, Industry, Citizen — "
-            "each read the same summary independently (~550 tokens each, run sequentially)."
+            "Five Haiku agents read the same summary independently (~550 tokens each, sequential)."
         )
 
-        v_btn, v_clr = st.columns([2, 1])
-        with v_btn:
+        vb, vc = st.columns([2, 1])
+        with vb:
             run_verdict = st.button(
                 "Run 5-Perspective Analysis", key="run_verdict_btn", use_container_width=True
             )
-        with v_clr:
+        with vc:
             if st.button("Clear", key="clear_verdict_btn", use_container_width=True):
                 st.session_state.pop("verdict_results", None)
                 st.rerun()
 
         if run_verdict:
             from app.verdict_agents import run_verdict_agents
-            bill_name = BILLS[st.session_state["last_bill"]]["display_name"]
-            verdicts = []
-            bar = st.progress(0, text="Starting…")
+            bname = BILLS[st.session_state["last_bill"]]["display_name"]
+            verdicts, bar = [], st.progress(0, text="Starting…")
             labels = ["Economist", "Social Worker", "Legal Expert", "Industry", "Citizen"]
-            for i, vr in enumerate(run_verdict_agents(summary, bill_name)):
+            for i, vr in enumerate(run_verdict_agents(summary, bname)):
                 verdicts.append(vr)
                 bar.progress((i + 1) / 5, text=f"{labels[i]} done ({i+1}/5)")
             bar.empty()
@@ -521,65 +460,50 @@ with tab_explain:
             st.rerun()
 
         if "verdict_results" in st.session_state:
-            from app.verdict_agents import verdict_style, AGENTS
+            from app.verdict_agents import verdict_style
             verdicts = st.session_state["verdict_results"]
 
-            POSITIVE = {"positive", "protective", "robust", "business_friendly", "good_news"}
-            NEGATIVE = {"concern", "exclusionary", "legally_risky", "burdensome", "bad_news"}
+            POSITIVE = {"positive","protective","robust","business_friendly","good_news"}
+            NEGATIVE = {"concern","exclusionary","legally_risky","burdensome","bad_news"}
             pos = sum(1 for v in verdicts if v.get("verdict") in POSITIVE)
             neg = sum(1 for v in verdicts if v.get("verdict") in NEGATIVE)
             mix = len(verdicts) - pos - neg
 
             st.markdown(
-                f"""
-<div class="sh-card" style="display:flex;align-items:center;gap:1.5rem;padding:0.875rem 1.25rem;">
-  <span style="font-size:0.8125rem;font-weight:600;color:#71717a;">Overall:</span>
-  <span class="sh-badge sh-badge-green">{pos} Positive</span>
-  <span class="sh-badge sh-badge-amber">{mix} Mixed</span>
-  <span class="sh-badge sh-badge-red">{neg} Concern</span>
-</div>
-""",
+                f'<div class="sh-card" style="display:flex;align-items:center;'
+                f'gap:1.25rem;padding:0.875rem 1.25rem;flex-wrap:wrap;">'
+                f'<span class="sh-label">OVERALL</span>'
+                f'<span class="sh-badge sh-badge-green">{pos} Positive</span>'
+                f'<span class="sh-badge sh-badge-amber">{mix} Mixed</span>'
+                f'<span class="sh-badge sh-badge-red">{neg} Concern</span>'
+                f'</div>',
                 unsafe_allow_html=True,
             )
 
             FIELD_LABELS = {
-                "positives": "Positives",
-                "concerns": "Concerns",
-                "who_is_protected": "Who is protected",
-                "who_is_excluded": "Who may be excluded",
-                "implementation_gap": "Implementation gap",
-                "grassroots_note": "Ground-level note",
-                "strengths": "Legal strengths",
-                "gaps": "Legal gaps",
-                "likely_litigation": "Likely court challenge",
-                "constitutional_note": "Constitutional angle",
-                "compliance_cost": "Compliance cost",
-                "who_benefits": "Who benefits",
-                "who_struggles": "Who struggles",
-                "ease_of_doing_business": "Ease of doing business",
-                "msme_note": "MSME note",
-                "what_changes_for_me": "What changes",
-                "what_stays_same": "What stays the same",
-                "biggest_question": "Biggest question",
-                "trust_level": "Trust level",
-                "most_affected_sector": "Most affected sector",
-                "fiscal_note": "Fiscal note",
+                "positives":"Positives","concerns":"Concerns",
+                "who_is_protected":"Who is protected","who_is_excluded":"Who may be excluded",
+                "implementation_gap":"Implementation gap","grassroots_note":"Ground-level note",
+                "strengths":"Legal strengths","gaps":"Legal gaps",
+                "likely_litigation":"Likely court challenge",
+                "constitutional_note":"Constitutional angle",
+                "compliance_cost":"Compliance cost","who_benefits":"Who benefits",
+                "who_struggles":"Who struggles",
+                "ease_of_doing_business":"Ease of doing business","msme_note":"MSME note",
+                "what_changes_for_me":"What changes","what_stays_same":"What stays the same",
+                "biggest_question":"Biggest question","trust_level":"Trust level",
+                "most_affected_sector":"Most affected sector","fiscal_note":"Fiscal note",
             }
 
             for v in verdicts:
-                vd = v.get("verdict", "neutral")
+                vd = v.get("verdict","neutral")
                 bg, fg, icon = verdict_style(vd)
-                headline = v.get("headline", "")
-                label = v.get("agent_label", "Agent")
-
-                with st.expander(f"{label} — {headline}"):
+                with st.expander(f"{v.get('agent_label','')} — {v.get('headline','')}"):
                     st.markdown(
                         f'<span class="sh-badge" style="background:{bg};color:{fg};">'
                         f'{icon} {vd.replace("_"," ").title()}</span>',
                         unsafe_allow_html=True,
                     )
-                    skip = {"agent_id","agent_label","agent_description","verdict",
-                            "headline","_usage","error","confidence"}
                     for key, friendly in FIELD_LABELS.items():
                         val = v.get(key)
                         if not val:
@@ -605,13 +529,12 @@ with tab_explain:
             c1.metric("Input tokens", f"{inp:,}")
             c2.metric("Output tokens", f"{out:,}")
             c3.metric("Est. cost", f"₹{cost*84:.2f}")
-            st.caption("Sonnet 4.6 summary · Haiku 4.5 judge + verdict agents")
+            st.caption("Sonnet 4.6 (summary) · Haiku 4.5 (judge + verdict agents)")
 
-        # ── Footer disclaimer ─────────────────────────────────────────────
         st.markdown(
             notice_html(
-                "AI-generated summary for informational purposes only. "
-                "Not legal advice. Consult a qualified advocate before acting on any law. "
+                "AI summary for informational purposes only. Not legal advice. "
+                "Consult a qualified advocate before acting on any law. "
                 "Source: India Code / Parliament of India · CC-BY 4.0",
                 "warning",
             ),
@@ -623,35 +546,29 @@ with tab_explain:
         st.markdown('<div style="margin-top:1.5rem;"></div>', unsafe_allow_html=True)
 
         DEMO_QS = {
-            "dpdp": ["What is personal data?", "What is a data fiduciary?",
-                     "What are my rights under DPDP?"],
+            "dpdp":            ["What is personal data?","What is a data fiduciary?",
+                                 "What are my rights under DPDP?"],
             "social_security": ["What benefits do gig workers get?",
                                  "Who is covered under social security?"],
-            "bns": ["What is a cognizable offence?", "What are punishments for theft?"],
-            "telecom": ["What is a licensed telecom entity?", "What is biometric KYC?"],
-            "maha_rent": ["Can my landlord evict me?",
-                          "How much deposit can my landlord ask for?",
-                          "What repairs must my landlord do?"],
+            "bns":             ["What is a cognizable offence?","What are punishments for theft?"],
+            "telecom":         ["What is a licensed telecom entity?","What is biometric KYC?"],
+            "maha_rent":       ["Can my landlord evict me?",
+                                 "How much deposit can my landlord ask for?",
+                                 "What repairs must my landlord do?"],
         }
 
-        st.markdown(
-            '<p style="font-size:0.75rem;font-weight:600;color:#71717a;'
-            'text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem;">'
-            'TRY THESE QUESTIONS</p>',
-            unsafe_allow_html=True,
-        )
+        st.markdown(label_html("TRY THESE QUESTIONS"), unsafe_allow_html=True)
         for q in DEMO_QS.get(selected_key, []):
             if st.button(q, key=f"demo_{q}"):
                 st.session_state["query_input"] = q
                 st.rerun()
 
         st.markdown(
-            '<div class="sh-card" style="margin-top:1.5rem;">'
-            '<p style="margin:0 0 0.25rem;font-size:0.75rem;font-weight:600;'
-            'color:#71717a;text-transform:uppercase;letter-spacing:0.05em;">ROADMAP</p>'
-            '<p style="margin:0;font-size:0.875rem;color:#3f3f46;">'
-            'WhatsApp bot · All 22 scheduled languages · State laws · Bill comparison'
-            '</p></div>',
+            f'<div class="sh-card" style="margin-top:1.5rem;border-left:2px solid {ACCENT};">'
+            f'<p class="sh-label" style="margin:0 0 0.25rem;">ROADMAP</p>'
+            f'<p style="margin:0;font-size:0.875rem;color:#d4d4d8;">'
+            f'WhatsApp bot · All 22 scheduled languages · State laws · Bill comparison</p>'
+            f'</div>',
             unsafe_allow_html=True,
         )
 
@@ -666,21 +583,21 @@ with tab_browse:
         st.error(f"Could not load state bills: {e}")
         st.stop()
 
-    # Hero stat
+    # Hero
     st.markdown(
         f"""
-<div style="background:linear-gradient(135deg,#18181b,#3f3f46);color:#fafafa;
-     padding:1.5rem;border-radius:0.5rem;margin-bottom:1.25rem;">
-  <p style="margin:0 0 0.25rem;font-size:0.75rem;font-weight:500;
-            text-transform:uppercase;letter-spacing:0.1em;opacity:0.6;">
-    DATASET
-  </p>
-  <h2 style="margin:0;font-size:2rem;font-weight:700;letter-spacing:-0.03em;">
+<div style="background:linear-gradient(135deg,#18181b,#27272a);
+     border:1px solid {BORDER};border-radius:0.5rem;
+     padding:1.5rem;margin-bottom:1.25rem;">
+  <p class="sh-label" style="margin:0 0 0.25rem;color:{MUTED_FG};">DATASET</p>
+  <h2 style="margin:0;font-family:'DM Sans',sans-serif;font-size:2rem;
+             font-weight:700;letter-spacing:-0.03em;color:{FG};">
     {len(all_rows):,} State Bills
   </h2>
-  <p style="margin:0.25rem 0 0;font-size:0.875rem;opacity:0.7;">
-    Across <strong>30 states &amp; UTs</strong> ·
-    <strong>{yr_min}</strong> – <strong>{yr_max}</strong> ·
+  <p style="margin:0.25rem 0 0;font-size:0.875rem;color:{MUTED_FG};">
+    Across <strong style="color:{FG};">30 states &amp; UTs</strong> ·
+    <strong style="color:{FG};">{yr_min}</strong> –
+    <strong style="color:{FG};">{yr_max}</strong> ·
     Source: PRS Legislative Research
   </p>
 </div>
@@ -708,20 +625,18 @@ with tab_browse:
     )
 
     st.markdown(
-        f'<p style="font-size:0.8125rem;color:#71717a;margin:0.25rem 0 0.75rem;">'
-        f'Showing <strong>{len(filtered):,}</strong> bills</p>',
+        f'<p style="font-size:0.8125rem;color:{MUTED_FG};margin:0.25rem 0 0.75rem;">'
+        f'Showing <strong style="color:{FG};">{len(filtered):,}</strong> bills</p>',
         unsafe_allow_html=True,
     )
 
     import pandas as pd
     if filtered:
-        df = pd.DataFrame(filtered)[["bill", "state", "date", "chamber"]]
-        df.columns = ["Bill Name", "State", "Date", "Legislature"]
+        df = pd.DataFrame(filtered)[["bill","state","date","chamber"]]
+        df.columns = ["Bill Name","State","Date","Legislature"]
         st.dataframe(df.head(500), use_container_width=True, height=400, hide_index=True)
-
         if len(filtered) > 500:
-            st.caption(f"Showing first 500 of {len(filtered):,}. Narrow your filters for more.")
-
+            st.caption(f"Showing first 500 of {len(filtered):,}. Narrow filters for more.")
         st.download_button(
             "Download filtered list (CSV)",
             data=df.to_csv(index=False).encode(),
@@ -734,44 +649,33 @@ with tab_browse:
             unsafe_allow_html=True,
         )
 
-    # Distribution chart
-    st.markdown(
-        '<p style="font-size:0.75rem;font-weight:600;color:#71717a;'
-        'text-transform:uppercase;letter-spacing:0.05em;margin:1.25rem 0 0.5rem;">'
-        'BILLS BY STATE</p>',
-        unsafe_allow_html=True,
-    )
+    # Chart
+    st.markdown(label_html("BILLS BY STATE"), unsafe_allow_html=True)
     state_counts = {}
     for r in filtered:
         state_counts[r["state"]] = state_counts.get(r["state"], 0) + 1
-
     if state_counts:
         chart_df = (
-            pd.DataFrame(list(state_counts.items()), columns=["State", "Bills"])
+            pd.DataFrame(list(state_counts.items()), columns=["State","Bills"])
             .sort_values("Bills", ascending=False).head(15)
         )
         st.bar_chart(chart_df.set_index("State"))
 
-    # Spotlight card
+    # Spotlight
     st.markdown(
-        """
-<div class="sh-card" style="border-left:4px solid #18181b;margin-top:1.25rem;">
-  <p style="margin:0 0 0.25rem;font-size:0.75rem;font-weight:600;color:#71717a;
-            text-transform:uppercase;letter-spacing:0.05em;">SPOTLIGHT</p>
-  <h3 style="margin:0 0 0.5rem;font-size:1rem;font-weight:600;color:#09090b;">
-    Maharashtra Rent Control Act 1999
-  </h3>
-  <p style="margin:0 0 0.75rem;font-size:0.875rem;color:#3f3f46;">
-    Over <strong>12 million households</strong> in Maharashtra rent their homes.
-    This Act governs eviction, rent increases, deposits and tenant rights —
-    yet most tenants have never read it.
-  </p>
-  <p style="margin:0;font-size:0.8125rem;color:#71717a;">
-    Select <strong>Maharashtra Rent Control Act 1999 ★</strong> in the sidebar,
-    switch to the <strong>Explain a Law</strong> tab, and ask:
-    <em>"Can my landlord evict me?"</em>
-  </p>
-</div>
-""",
+        f'<div class="sh-card" style="border-left:3px solid #e4e4e7;margin-top:1rem;">'
+        f'<p class="sh-label" style="margin:0 0 0.25rem;">SPOTLIGHT</p>'
+        f'<h3 style="margin:0 0 0.5rem;font-family:\'DM Sans\',sans-serif;'
+        f'font-size:1rem;font-weight:600;color:{FG};">'
+        f'Maharashtra Rent Control Act 1999</h3>'
+        f'<p style="margin:0 0 0.75rem;font-size:0.875rem;color:#d4d4d8;">'
+        f'Over <strong style="color:{FG};">12 million households</strong> in Maharashtra '
+        f'rent their homes. This Act governs eviction, rent increases, deposits and '
+        f'tenant rights — yet most tenants have never read it.</p>'
+        f'<p style="margin:0;font-size:0.8125rem;color:{MUTED_FG};">'
+        f'Select <strong style="color:{FG};">Maharashtra Rent Control Act 1999 ★</strong> '
+        f'in the sidebar, go to <strong style="color:{FG};">Explain a Law</strong>, '
+        f'and ask: <em>"Can my landlord evict me?"</em></p>'
+        f'</div>',
         unsafe_allow_html=True,
     )
