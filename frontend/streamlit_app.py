@@ -86,8 +86,24 @@ with st.sidebar:
         "Small Business Owner",
         "Student",
         "Tenant",
+        "🎯 Other (Custom)",
     ]
     selected_persona = st.selectbox("Who are you?", PERSONAS)
+
+    custom_persona = ""
+    if selected_persona == "🎯 Other (Custom)":
+        st.markdown("**Describe yourself so Claude can personalise the explanation:**")
+        custom_persona = st.text_area(
+            label="Your persona",
+            value="I am a 28-year-old salaried employee in Bengaluru. "
+                  "I work in IT and earn ₹8 lakh per year. "
+                  "I use apps like Swiggy, Zepto, and Razorpay daily.",
+            height=100,
+            help="The more specific you are, the more personalised the explanation will be.",
+            key="custom_persona_input",
+        )
+        if not custom_persona.strip():
+            st.warning("Please describe yourself to get a personalised explanation.")
 
     language = st.radio("Language", ["English", "Hindi"])
 
@@ -114,7 +130,7 @@ with col_clear:
         st.rerun()
 
 # ── Search & summarise ─────────────────────────────────────────────────────
-def run_query(bill_key: str, query_text: str) -> dict:
+def run_query(bill_key: str, query_text: str, custom_persona: str = "") -> dict:
     from app.llm_handler import summarize_with_citations, verify_with_haiku
     import textstat
 
@@ -126,7 +142,7 @@ def run_query(bill_key: str, query_text: str) -> dict:
     top = results[0]
     bill_name = BILLS[bill_key]["display_name"]
 
-    sonnet_resp = summarize_with_citations(top["text"], top["section"], bill_name)
+    sonnet_resp = summarize_with_citations(top["text"], top["section"], bill_name, custom_persona=custom_persona)
     summary_json = sonnet_resp["summary"]
 
     try:
@@ -161,7 +177,7 @@ def run_query(bill_key: str, query_text: str) -> dict:
 if search_clicked and query.strip():
     with st.spinner("🔍 Retrieving relevant sections… 📝 Generating explanation… ✅ Verifying accuracy…"):
         try:
-            result = run_query(selected_key, query.strip())
+            result = run_query(selected_key, query.strip(), custom_persona=custom_persona)
             st.session_state["last_result"] = result
             st.session_state["last_query"] = query.strip()
             st.session_state["last_bill"] = selected_key
@@ -303,7 +319,8 @@ if "last_result" in st.session_state:
     # Red flags from Haiku
     red_flags = result.get("red_flags", [])
     # Filter out raw Python error strings (e.g. JSON parse errors) and show them differently
-    _parse_errors = [f for f in red_flags if "line 1 column" in f or "Expecting value" in f or "JSONDecodeError" in f]
+    _JSON_ERROR_HINTS = ("line ", "column ", "char ", "Expecting", "JSONDecodeError", "json", "delimiter", "Unterminated", "truncated")
+    _parse_errors = [f for f in red_flags if any(hint.lower() in f.lower() for hint in _JSON_ERROR_HINTS)]
     _real_flags = [f for f in red_flags if f not in _parse_errors]
 
     if _parse_errors:

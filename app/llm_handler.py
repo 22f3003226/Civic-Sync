@@ -33,7 +33,7 @@ def _extract_json(text: str) -> dict:
     return json.loads(text)
 
 
-def summarize_with_citations(bill_text: str, section_name: str, bill_name: str) -> Dict:
+def summarize_with_citations(bill_text: str, section_name: str, bill_name: str, custom_persona: str = "") -> Dict:
     """
     Call Claude Sonnet 4.6 to summarize a bill section.
     Returns {summary: dict, usage: dict}.
@@ -46,11 +46,20 @@ def summarize_with_citations(bill_text: str, section_name: str, bill_name: str) 
     # Compute grade level of source to include in context
     source_grade = textstat.flesch_kincaid_grade(bill_text[:2000])
 
+    persona_instruction = ""
+    if custom_persona:
+        persona_instruction = (
+            f"\nSPECIAL INSTRUCTION: The user has described themselves as: \"{custom_persona}\". "
+            "In persona_impacts[], include at least one entry specifically for this user. "
+            "Use their exact description as the persona name. "
+            "Make the impact as specific to their situation as possible."
+        )
+
     response = _get_client().messages.create(
         model="claude-sonnet-4-6",
         max_tokens=2500,
         temperature=0,
-        system=SONNET_SYSTEM_PROMPT,
+        system=SONNET_SYSTEM_PROMPT + persona_instruction,
         messages=[
             {
                 "role": "user",
@@ -82,14 +91,22 @@ def verify_with_haiku(original_text: str, summary_json: dict) -> Dict:
     Call Claude Haiku 4.5 to judge the faithfulness of a Sonnet summary.
     Returns {claims_scored, overall_faithfulness_score, red_flags, approval, requires_human_review}.
     """
-    # Truncate original text for Haiku context efficiency
-    max_chars = 6_000
+    # Truncate original text to control input size
+    max_chars = 4_000
     if len(original_text) > max_chars:
         original_text = original_text[:max_chars] + "\n[... truncated ...]"
 
+    # Send only tl_dr + key_provisions to Haiku — not the full summary
+    # This keeps output short and prevents mid-JSON truncation
+    slim_summary = {
+        "tl_dr": summary_json.get("tl_dr", ""),
+        "purpose": summary_json.get("purpose", ""),
+        "key_provisions": summary_json.get("key_provisions", [])[:4],  # max 4 provisions
+    }
+
     response = _get_client().messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=1500,
+        max_tokens=2000,
         temperature=0,
         system=HAIKU_JUDGE_PROMPT,
         messages=[
@@ -97,7 +114,7 @@ def verify_with_haiku(original_text: str, summary_json: dict) -> Dict:
                 "role": "user",
                 "content": (
                     f"ORIGINAL BILL TEXT:\n{original_text}\n\n"
-                    f"SUMMARY TO VERIFY:\n{json.dumps(summary_json, indent=2)}\n\n"
+                    f"SUMMARY TO VERIFY:\n{json.dumps(slim_summary, indent=2)}\n\n"
                     "Verify faithfulness. Output only JSON."
                 ),
             }
