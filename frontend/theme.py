@@ -128,43 +128,68 @@ html, body,
   outline: none !important;
 }
 
-/* ── Buttons ──────────────────────────────────────────────────────────── */
-[data-testid="stButton"] button[kind="primary"] {
-  background: var(--primary) !important;
-  color: var(--primary-fg) !important;
-  border: 1px solid var(--primary) !important;
+/* ── Buttons (Streamlit 1.40 uses data-testid="baseButton-*") ─────────── */
+/* Base reset for all buttons */
+[data-testid="stButton"] button,
+[data-testid="stFormSubmitButton"] button,
+[data-testid="stDownloadButton"] button {
   border-radius: var(--radius) !important;
   font-family: 'DM Sans', sans-serif !important;
   font-size: 0.875rem !important;
   font-weight: 600 !important;
-  box-shadow: var(--shadow-sm) !important;
-  transition: opacity 0.15s !important;
+  transition: opacity 0.15s, background-color 0.15s !important;
+  letter-spacing: 0.01em !important;
 }
-[data-testid="stButton"] button[kind="primary"]:hover { opacity: 0.85 !important; }
 
+/* Primary button — bright white on dark so it pops */
+[data-testid="baseButton-primary"],
+[data-testid="stButton"] button[kind="primary"] {
+  background-color: #ffffff !important;
+  color: #09090b !important;
+  border: 1px solid #ffffff !important;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.4) !important;
+}
+[data-testid="baseButton-primary"]:hover,
+[data-testid="stButton"] button[kind="primary"]:hover {
+  background-color: #e4e4e7 !important;
+  border-color: #e4e4e7 !important;
+}
+/* Force inner <p> text colour on primary */
+[data-testid="baseButton-primary"] p,
+[data-testid="stButton"] button[kind="primary"] p {
+  color: #09090b !important;
+  font-weight: 600 !important;
+}
+
+/* Secondary / plain buttons */
+[data-testid="baseButton-secondary"],
 [data-testid="stButton"] button[kind="secondary"],
 [data-testid="stButton"] button:not([kind]) {
-  background: var(--card) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius) !important;
-  font-family: 'DM Sans', sans-serif !important;
-  font-size: 0.875rem !important;
-  font-weight: 500 !important;
+  background-color: #27272a !important;
+  color: #fafafa !important;
+  border: 1px solid #3f3f46 !important;
 }
-[data-testid="stButton"] button:not([kind]):hover,
-[data-testid="stButton"] button[kind="secondary"]:hover {
-  background: var(--muted) !important;
+[data-testid="baseButton-secondary"]:hover,
+[data-testid="stButton"] button[kind="secondary"]:hover,
+[data-testid="stButton"] button:not([kind]):hover {
+  background-color: #3f3f46 !important;
+}
+[data-testid="baseButton-secondary"] p,
+[data-testid="stButton"] button[kind="secondary"] p,
+[data-testid="stButton"] button:not([kind]) p {
+  color: #fafafa !important;
 }
 
 /* ── Download button ──────────────────────────────────────────────────── */
-[data-testid="stDownloadButton"] button {
-  background: var(--card) !important;
-  color: var(--foreground) !important;
-  border: 1px solid var(--border) !important;
+[data-testid="stDownloadButton"] button,
+[data-testid="baseButton-secondary"][data-testid*="download"] {
+  background-color: #27272a !important;
+  color: #fafafa !important;
+  border: 1px solid #3f3f46 !important;
   border-radius: var(--radius) !important;
-  font-size: 0.875rem !important;
-  font-weight: 500 !important;
+}
+[data-testid="stDownloadButton"] button p {
+  color: #fafafa !important;
 }
 
 /* ── Metric cards ─────────────────────────────────────────────────────── */
