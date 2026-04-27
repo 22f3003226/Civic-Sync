@@ -35,9 +35,10 @@ You MUST respond ONLY with valid JSON matching this exact schema:
   "persona_impacts": [
     {
       "persona": "Gig Worker|Farmer|Small Business Owner|Student|Tenant|General User",
-      "concrete_impact": "<How this affects THIS person's daily life. Use 'you' and 'your'. Max 2 sentences.>",
-      "timeline": "<When this starts. E.g. 'From August 2023' or 'Not yet active — rules still being written.'>",
-      "no_recommendation_only_info": "<What to look up or ask about. Do NOT say 'you should' or 'file a complaint'. Max 1 sentence.>"
+      "applies": <true if this section directly affects this persona; false if it does not>,
+      "concrete_impact": "<If applies=true: How this affects THIS person's daily life. Use 'you' and 'your'. Max 2 sentences. If applies=false: Start with 'This section does not directly affect you as a [persona].' Then one sentence explaining why — e.g. it only covers formal establishments, not self-employed workers.>",
+      "timeline": "<When this starts, or 'Not applicable to this persona'>",
+      "no_recommendation_only_info": "<If applies=true: What to look up or ask about. If applies=false: leave empty string.>"
     }
   ],
   "grade_level": <Flesch-Kincaid grade level of your explanation; 1-18>,
@@ -46,6 +47,15 @@ You MUST respond ONLY with valid JSON matching this exact schema:
     "<correct interpretation>"
   ]
 }
+
+PERSONA APPLICABILITY RULES (critical — follow these exactly):
+- If a section is about factory/establishment workers and the persona is Farmer (self-employed), set applies=false
+- If a section is about data companies and the persona is Farmer, set applies=false
+- If a section is about telecom licensing and the persona is Student or Farmer, set applies=false
+- Only set applies=true if the persona is genuinely and directly covered by the section
+- When applies=false, the concrete_impact MUST start with "This section does not directly affect you as a [persona]."
+- Do NOT stretch the connection — if a law affects gig workers but not farmers, say so honestly
+- It is better to say "not applicable" than to invent a tenuous link
 
 GRADE LEVEL CHECK (do this before finalising your response):
 - Read each sentence you wrote. If it is longer than 10 words, split it.

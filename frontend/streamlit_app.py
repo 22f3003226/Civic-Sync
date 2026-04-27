@@ -338,28 +338,50 @@ with tab_explain:
 
             # Persona impacts
             impacts = summary.get("persona_impacts", [])
-            show = ([i for i in impacts
-                     if i.get("persona","").lower() in
-                        (selected_persona.lower(), "general user")]
-                    or impacts)
-            if show:
+
+            # Find impact for selected persona (or general user as fallback)
+            persona_match = next(
+                (i for i in impacts
+                 if i.get("persona", "").lower() == selected_persona.lower()),
+                next(
+                    (i for i in impacts if i.get("persona", "").lower() == "general user"),
+                    None
+                )
+            )
+
+            st.markdown(label_html(f"FOR {selected_persona.upper()}"), unsafe_allow_html=True)
+
+            if persona_match and persona_match.get("applies") is False:
+                # Not applicable — show clear grounding message
+                reason = persona_match.get("concrete_impact", "")
                 st.markdown(
-                    label_html(f"FOR {selected_persona.upper()}"),
+                    f'<div class="sh-card" style="border-left:3px solid #78350f;'
+                    f'background:#1c1000;padding:1rem 1.25rem;">'
+                    f'<p class="sh-label" style="margin:0 0 0.3rem;color:#fbbf24;">'
+                    f'NOT DIRECTLY APPLICABLE</p>'
+                    f'<p style="margin:0;font-size:0.875rem;color:#fcd34d;">{reason}</p>'
+                    f'</div>',
                     unsafe_allow_html=True,
                 )
+            elif persona_match:
+                with st.expander(persona_match.get("persona", selected_persona), expanded=True):
+                    st.markdown(persona_match.get("concrete_impact", ""))
+                    tl = persona_match.get("timeline")
+                    if tl and tl.lower() not in ("not applicable to this persona", ""):
+                        st.markdown(
+                            f'<span style="font-size:0.75rem;color:{MUTED_FG};">'
+                            f'Timeline: {tl}</span>',
+                            unsafe_allow_html=True,
+                        )
+                    info = persona_match.get("no_recommendation_only_info")
+                    if info:
+                        st.markdown(notice_html(info, "info"), unsafe_allow_html=True)
+            else:
+                # No match at all — show all impacts collapsed
+                show = impacts
                 for imp in show:
-                    with st.expander(imp.get("persona", selected_persona)):
+                    with st.expander(imp.get("persona", "")):
                         st.markdown(imp.get("concrete_impact", ""))
-                        tl = imp.get("timeline")
-                        if tl:
-                            st.markdown(
-                                f'<span style="font-size:0.75rem;color:{MUTED_FG};">'
-                                f'Timeline: {tl}</span>',
-                                unsafe_allow_html=True,
-                            )
-                        info = imp.get("no_recommendation_only_info")
-                        if info:
-                            st.markdown(notice_html(info, "info"), unsafe_allow_html=True)
 
             # Misconceptions
             misconceptions = summary.get("common_misconceptions", [])
