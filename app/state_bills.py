@@ -4,6 +4,7 @@ State Bills browser — loads data/bills_states.csv and exposes filter helpers.
 import csv
 import re
 import os
+import urllib.parse
 from typing import List, Dict, Optional
 from functools import lru_cache
 
@@ -42,6 +43,17 @@ def get_states() -> List[str]:
 def get_year_range() -> tuple:
     years = [r["year"] for r in load_state_bills() if r["year"]]
     return (min(years), max(years)) if years else (1960, 2025)
+
+
+def prs_search_url(bill_name: str, state: str = "") -> str:
+    """
+    Construct a Google search URL scoped to prsindia.org for a state bill.
+    PRS India doesn't have per-bill summary pages for the 23k CSV entries,
+    so a scoped Google search is the most reliable way to surface any
+    PRS content that does exist for a given bill.
+    """
+    query = f'site:prsindia.org "{bill_name}"'
+    return f"https://www.google.com/search?q={urllib.parse.quote(query)}"
 
 
 def filter_bills(
