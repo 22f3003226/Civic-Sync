@@ -1,5 +1,6 @@
 import os
 import json
+import hashlib
 import numpy as np
 from rank_bm25 import BM25Okapi
 from typing import List, Dict, Optional, Tuple
@@ -13,25 +14,47 @@ except ImportError:
 
 EMBED_CACHE_PATH = "data/embeddings_cache.json"
 
+# ── Module-level singleton ────────────────────────────────────────────────────
+# Loaded ONCE and shared across ALL HybridRetriever instances.
+# Python's hash() is randomised per-process (PYTHONHASHSEED) so we use
+# hashlib.md5 for stable, deterministic cache keys.
+_EMBED_CACHE: Dict[str, List[float]] = {}
+_EMBED_CACHE_LOADED = False
+
 
 def _load_embed_cache() -> Dict[str, List[float]]:
-    try:
-        with open(EMBED_CACHE_PATH) as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+    global _EMBED_CACHE, _EMBED_CACHE_LOADED
+    if not _EMBED_CACHE_LOADED:
+        try:
+            with open(EMBED_CACHE_PATH) as f:
+                _EMBED_CACHE = json.load(f)
+            print(f"  Embed cache loaded: {len(_EMBED_CACHE)} entries")
+        except (FileNotFoundError, json.JSONDecodeError):
+            _EMBED_CACHE = {}
+        _EMBED_CACHE_LOADED = True
+    return _EMBED_CACHE
 
 
 def _save_embed_cache(cache: Dict[str, List[float]]) -> None:
+    global _EMBED_CACHE
+    _EMBED_CACHE = cache          # keep singleton in sync
     os.makedirs("data", exist_ok=True)
     with open(EMBED_CACHE_PATH, "w") as f:
         json.dump(cache, f)
+
+
+def _stable_hash(text: str) -> str:
+    """Deterministic 16-char hex hash — safe across Python restarts."""
+    return hashlib.md5(text.encode("utf-8", errors="ignore")).hexdigest()[:16]
 
 
 class HybridRetriever:
     """
     Hybrid BM25 + Voyage AI dense retrieval with RRF fusion.
     Falls back to BM25-only if VOYAGEAI_API_KEY is not set.
+
+    Dense index is built LAZILY on the first retrieve() call so the app
+    starts instantly. With a warm cache the lazy build is <100 ms.
     """
 
     def __init__(self, sections: List[Dict], bill_key: str = ""):
@@ -39,14 +62,14 @@ class HybridRetriever:
         self.bill_key = bill_key
         self.corpus = [s["text"] for s in sections]
 
-        # BM25 index
+        # BM25 index — fast, built synchronously
         tokenized = [doc.lower().split() for doc in self.corpus]
         self.bm25 = BM25Okapi(tokenized)
 
-        # Dense embeddings (Voyage AI)
+        # Dense embeddings — client set up here, index built lazily
         self._voyage_client: Optional[object] = None
         self._embeddings: Optional[np.ndarray] = None
-        self._embed_cache = _load_embed_cache()
+        self._embed_cache = _load_embed_cache()   # returns singleton reference
         self._use_dense = self._init_voyage()
 
     def _init_voyage(self) -> bool:
@@ -55,20 +78,19 @@ class HybridRetriever:
             return False
         try:
             self._voyage_client = voyageai.Client(api_key=api_key)
-            self._build_dense_index()
-            return True
+            return True     # index built lazily on first retrieve()
         except Exception as e:
             print(f"⚠️ Voyage AI init failed ({e}); using BM25 only.")
             return False
 
     def _embed_texts(self, texts: List[str], input_type: str = "document") -> np.ndarray:
-        """Batch embed texts via Voyage AI, with in-memory + disk cache."""
+        """Batch embed via Voyage AI with stable per-key caching."""
         results = []
-        uncached_texts = []
-        uncached_indices = []
+        uncached_texts: List[str] = []
+        uncached_indices: List[Tuple[int, str]] = []
 
         for i, t in enumerate(texts):
-            key = f"{self.bill_key}:{input_type}:{hash(t)}"
+            key = f"{self.bill_key}:{input_type}:{_stable_hash(t)}"
             if key in self._embed_cache:
                 results.append((i, self._embed_cache[key]))
             else:
@@ -76,12 +98,13 @@ class HybridRetriever:
                 uncached_indices.append((i, key))
 
         if uncached_texts:
-            # Batch in chunks of 128 to stay within API limits
             batch_size = 128
-            new_embeddings = []
+            new_embeddings: List[List[float]] = []
             for start in range(0, len(uncached_texts), batch_size):
                 batch = uncached_texts[start: start + batch_size]
-                result = self._voyage_client.embed(batch, model="voyage-law-2", input_type=input_type)
+                result = self._voyage_client.embed(
+                    batch, model="voyage-law-2", input_type=input_type
+                )
                 new_embeddings.extend(result.embeddings)
 
             for (idx, cache_key), emb in zip(uncached_indices, new_embeddings):
@@ -96,27 +119,28 @@ class HybridRetriever:
     def _build_dense_index(self) -> None:
         print(f"  Building dense index for {self.bill_key} ({len(self.corpus)} sections)…")
         self._embeddings = self._embed_texts(self.corpus, input_type="document")
-        # Normalize for cosine similarity via dot product
         norms = np.linalg.norm(self._embeddings, axis=1, keepdims=True) + 1e-8
         self._embeddings = self._embeddings / norms
 
     def _bm25_ranks(self, query: str, top_n: int) -> List[Tuple[int, float]]:
         scores = self.bm25.get_scores(query.lower().split())
-        ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
-        return ranked[:top_n]
+        return sorted(enumerate(scores), key=lambda x: x[1], reverse=True)[:top_n]
 
     def _dense_ranks(self, query: str, top_n: int) -> List[Tuple[int, float]]:
         q_emb = self._embed_texts([query], input_type="query")
         q_emb = q_emb / (np.linalg.norm(q_emb) + 1e-8)
         scores = (self._embeddings @ q_emb.T).flatten()
-        ranked = sorted(enumerate(scores.tolist()), key=lambda x: x[1], reverse=True)
-        return ranked[:top_n]
+        return sorted(enumerate(scores.tolist()), key=lambda x: x[1], reverse=True)[:top_n]
 
     def retrieve(self, query: str, top_k: int = 5) -> List[Dict]:
         """
         Hybrid retrieval with Reciprocal Rank Fusion.
-        Returns top_k sections sorted by relevance.
+        Dense index is built lazily here on the first call.
         """
+        # Lazy dense index: build on first retrieve (fast if cache is warm)
+        if self._use_dense and self._embeddings is None:
+            self._build_dense_index()
+
         pool = top_k * 2
         bm25_ranked = self._bm25_ranks(query, pool)
 

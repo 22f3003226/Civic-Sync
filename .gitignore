@@ -5,6 +5,8 @@ __pycache__/
 .DS_Store
 .streamlit/secrets.toml
 data/*.json
+!data/embeddings_cache.json
+!data/bill_chunks_cache.json
 *.egg-info/
 .venv/
 venv/
