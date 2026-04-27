@@ -350,6 +350,126 @@ with tab_explain:
                 for flag in _real_flags:
                     st.markdown(f"⚠️ {flag}")
 
+        # ── Policy Verdict Panel ───────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("### 🔍 Policy Verdict — 5 Perspectives")
+        st.caption(
+            "Five AI analysts — economist, social worker, legal expert, industry advisor, and "
+            "ordinary citizen — each read the same summary and give their independent verdict. "
+            "Each uses ~550 input tokens (Haiku), run sequentially to stay within rate limits."
+        )
+
+        verdict_btn_col, verdict_clear_col = st.columns([2, 1])
+        with verdict_btn_col:
+            run_verdict = st.button(
+                "🔍 Run 5-Perspective Analysis",
+                key="run_verdict_btn",
+                type="secondary",
+                use_container_width=True,
+            )
+        with verdict_clear_col:
+            if st.button("Clear Verdicts", key="clear_verdict_btn", use_container_width=True):
+                st.session_state.pop("verdict_results", None)
+                st.rerun()
+
+        if run_verdict:
+            from app.verdict_agents import run_verdict_agents
+            bill_name = BILLS[st.session_state["last_bill"]]["display_name"]
+            verdicts = []
+            progress = st.progress(0, text="Starting analysis…")
+            agent_labels = ["💰 Economist", "👷 Social Worker", "⚖️ Legal Expert", "🏢 Industry", "👤 Citizen"]
+            for i, agent_result in enumerate(run_verdict_agents(summary, bill_name)):
+                verdicts.append(agent_result)
+                pct = (i + 1) / 5
+                label = agent_labels[i] if i < len(agent_labels) else "…"
+                progress.progress(pct, text=f"✅ {label} done ({i+1}/5)")
+            progress.empty()
+            st.session_state["verdict_results"] = verdicts
+            st.rerun()
+
+        if "verdict_results" in st.session_state:
+            from app.verdict_agents import verdict_style
+            verdicts = st.session_state["verdict_results"]
+
+            # Verdict summary bar
+            verdict_counts = {"positive": 0, "mixed_neutral": 0, "negative": 0}
+            POSITIVE_VERDICTS = {"positive", "protective", "robust", "business_friendly", "good_news"}
+            NEGATIVE_VERDICTS = {"concern", "exclusionary", "legally_risky", "burdensome", "bad_news"}
+            for v in verdicts:
+                vd = v.get("verdict", "")
+                if vd in POSITIVE_VERDICTS:
+                    verdict_counts["positive"] += 1
+                elif vd in NEGATIVE_VERDICTS:
+                    verdict_counts["negative"] += 1
+                else:
+                    verdict_counts["mixed_neutral"] += 1
+
+            pos, mix, neg = verdict_counts["positive"], verdict_counts["mixed_neutral"], verdict_counts["negative"]
+            st.markdown(
+                f"""
+<div style="background:#1e293b;color:#f1f5f9;padding:14px 18px;border-radius:8px;
+            display:flex;gap:24px;align-items:center;margin-bottom:12px;">
+  <span style="font-size:1.1rem;font-weight:600;">Overall:</span>
+  <span style="color:#4ade80;">✅ {pos} Positive</span>
+  <span style="color:#facc15;">⚠️ {mix} Mixed</span>
+  <span style="color:#f87171;">🔴 {neg} Concern</span>
+</div>
+""",
+                unsafe_allow_html=True,
+            )
+
+            # Individual agent cards
+            for v in verdicts:
+                vd = v.get("verdict", "neutral")
+                bg, fg, icon = verdict_style(vd)
+                label = v.get("agent_label", "Agent")
+                desc = v.get("agent_description", "")
+                headline = v.get("headline", "")
+
+                with st.expander(f"{icon} {label} — {headline}", expanded=False):
+                    # Render all fields except internals
+                    skip = {"agent_id", "agent_label", "agent_description", "verdict",
+                            "headline", "_usage", "error", "confidence"}
+                    field_labels = {
+                        "positives": "✅ Positives",
+                        "concerns": "⚠️ Concerns",
+                        "who_is_protected": "🛡️ Who is protected",
+                        "who_is_excluded": "❌ Who may be excluded",
+                        "implementation_gap": "🔧 Implementation gap",
+                        "grassroots_note": "🌱 Ground-level note",
+                        "strengths": "✅ Legal strengths",
+                        "gaps": "⚠️ Legal gaps",
+                        "likely_litigation": "⚖️ Likely court challenge",
+                        "constitutional_note": "📜 Constitutional angle",
+                        "compliance_cost": "💸 Compliance cost",
+                        "who_benefits": "✅ Who benefits",
+                        "who_struggles": "⚠️ Who struggles",
+                        "ease_of_doing_business": "🏢 Ease of doing business",
+                        "msme_note": "🏪 MSME note",
+                        "what_changes_for_me": "🔄 What changes",
+                        "what_stays_same": "➖ What stays the same",
+                        "biggest_question": "❓ Biggest question",
+                        "trust_level": "🤝 Trust level",
+                        "most_affected_sector": "🏭 Most affected sector",
+                        "fiscal_note": "💰 Fiscal note",
+                    }
+                    for key, friendly in field_labels.items():
+                        val = v.get(key)
+                        if val:
+                            if isinstance(val, list):
+                                st.markdown(f"**{friendly}**")
+                                for item in val:
+                                    st.markdown(f"- {item}")
+                            else:
+                                st.markdown(f"**{friendly}:** {val}")
+
+                    conf = v.get("confidence")
+                    if conf is not None:
+                        st.progress(float(conf), text=f"Confidence: {conf:.0%}")
+
+                    if v.get("error"):
+                        st.error(f"Error: {v['error']}")
+
         with st.expander("📊 How Much Did This Cost?"):
             usage = result.get("sonnet_usage", {})
             inp = usage.get("input_tokens", 0)
@@ -358,7 +478,7 @@ with tab_explain:
             st.markdown(f"**Words read by AI (input):** {inp:,} tokens")
             st.markdown(f"**Words written by AI (output):** {out:,} tokens")
             st.markdown(f"**Estimated cost of this query:** ${cost_usd:.4f} USD (~₹{cost_usd*84:.2f})")
-            st.caption("Powered by Claude Sonnet 4.6 (summary) + Claude Haiku 4.5 (accuracy check)")
+            st.caption("Powered by Claude Sonnet 4.6 (summary) + Claude Haiku 4.5 (accuracy check + verdict agents)")
 
         st.divider()
         st.caption(
