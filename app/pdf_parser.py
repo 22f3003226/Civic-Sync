@@ -60,6 +60,18 @@ def extract_bill_text(path: str) -> str:
     return "\n".join(pages)
 
 
+def extract_text_from_bytes(pdf_bytes: bytes, max_pages: int = 100) -> str:
+    """Extract text from a PDF given as raw bytes (for user-uploaded files)."""
+    import io
+    pages = []
+    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+        for page in pdf.pages[:max_pages]:
+            text = page.extract_text()
+            if text:
+                pages.append(text)
+    return "\n".join(pages)
+
+
 def chunk_by_section(raw_text: str, bill_key: str = "") -> List[Dict]:
     """
     Split bill text into Section-level chunks.

@@ -105,9 +105,11 @@ def identify_relevant_bills(situation: str) -> List[str]:
     )
 
 
-def check_rights(situation: str) -> Dict:
+def check_rights(situation: str, uploaded_bills: Dict = None) -> Dict:
     """
     Given a user's described situation, return their rights under applicable bills.
+    uploaded_bills: optional dict of {key: {display_name, chunks, text, ...}} for
+    user-uploaded PDFs to search in addition to the built-in bills.
     Includes deterministic source-quote grounding verification for every right.
     """
     clean, warning = sanitize_query(situation)
@@ -119,7 +121,16 @@ def check_rights(situation: str) -> Dict:
         }
 
     bills = load_all_bills()
+    if uploaded_bills:
+        bills = {**bills, **uploaded_bills}
+
     bill_keys = identify_relevant_bills(clean)
+
+    # Always include uploaded bills — we don't know their content yet
+    if uploaded_bills:
+        for key in uploaded_bills:
+            if key not in bill_keys:
+                bill_keys.append(key)
 
     all_chunks: List[Dict] = []
     for key in bill_keys:

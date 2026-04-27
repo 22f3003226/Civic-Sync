@@ -80,10 +80,16 @@ st.markdown(
 
 # ── Load resources ──────────────────────────────────────────────────────────
 try:
-    BILLS, RETRIEVERS = load_resources()
+    _base_bills, _base_retrievers = load_resources()
 except Exception as e:
     st.error(f"Failed to load bills: {e}")
     st.stop()
+
+# Merge user-uploaded bills (session-scoped) with built-in bills
+_uploaded_bills = st.session_state.get("uploaded_bills", {})
+_uploaded_retrievers = st.session_state.get("uploaded_retrievers", {})
+BILLS = {**_base_bills, **_uploaded_bills}
+RETRIEVERS = {**_base_retrievers, **_uploaded_retrievers}
 
 # ── Sidebar ─────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -96,6 +102,9 @@ with st.sidebar:
         "telecom":         "Telecommunications Act 2023",
         "maha_rent":       "Maharashtra Rent Control Act 1999 ★",
     }
+    for _uk, _ud in _uploaded_bills.items():
+        BILL_OPTIONS[_uk] = f"[Uploaded] {_ud['display_name']}"
+
     selected_key = st.selectbox(
         "Bill",
         options=list(BILL_OPTIONS.keys()),
@@ -126,6 +135,76 @@ with st.sidebar:
             st.warning("Please describe yourself for a personalised explanation.")
 
     language = st.radio("Language", ["English", "Hindi"])
+
+    st.divider()
+
+    # ── Upload a Bill ─────────────────────────────────────────────────────
+    st.markdown(label_html("UPLOAD A BILL"), unsafe_allow_html=True)
+    uploaded_file = st.file_uploader(
+        "PDF",
+        type=["pdf"],
+        key="bill_upload",
+        help="Upload any Indian bill or act as a PDF (max 100 pages). "
+             "Image-scanned PDFs cannot be parsed.",
+        label_visibility="collapsed",
+    )
+
+    if uploaded_file is not None:
+        import re as _re
+        _slug = _re.sub(r"\W+", "_", uploaded_file.name.lower().replace(".pdf", ""))[:28]
+        _ukey = f"upload_{_slug}"
+
+        if _ukey not in st.session_state.get("uploaded_bills", {}):
+            with st.spinner(f"Parsing {uploaded_file.name}…"):
+                try:
+                    from app.pdf_parser import extract_text_from_bytes, chunk_by_section
+                    from app.retrieval import HybridRetriever as _HR
+
+                    _pdf_bytes = uploaded_file.read()
+                    _text = extract_text_from_bytes(_pdf_bytes)
+
+                    if len(_text.strip()) < 400:
+                        st.error(
+                            "PDF appears to be image-scanned — text could not be extracted. "
+                            "Try a text-based PDF or paste the text manually."
+                        )
+                    else:
+                        _chunks = chunk_by_section(_text, _ukey)
+                        _display = uploaded_file.name.replace(".pdf", "").replace(".PDF", "")
+
+                        if "uploaded_bills" not in st.session_state:
+                            st.session_state["uploaded_bills"] = {}
+                            st.session_state["uploaded_retrievers"] = {}
+
+                        st.session_state["uploaded_bills"][_ukey] = {
+                            "display_name": _display,
+                            "chunks": _chunks,
+                            "text": _text[:50_000],
+                            "path": "uploaded",
+                            "tag": "Uploaded",
+                        }
+                        st.session_state["uploaded_retrievers"][_ukey] = _HR(_chunks, _ukey)
+                        st.rerun()
+                except Exception as _e:
+                    st.error(f"Upload failed: {_e}")
+
+    # Show uploaded bills with remove buttons
+    if st.session_state.get("uploaded_bills"):
+        for _key, _data in list(st.session_state["uploaded_bills"].items()):
+            _c1, _c2 = st.columns([4, 1])
+            with _c1:
+                st.markdown(
+                    f'<p style="font-size:0.75rem;color:{MUTED_FG};margin:0.2rem 0;">'
+                    f'📄 {_data["display_name"][:28]}<br>'
+                    f'<span style="color:#52525b;">{len(_data["chunks"])} sections</span></p>',
+                    unsafe_allow_html=True,
+                )
+            with _c2:
+                if st.button("✕", key=f"rm_{_key}",
+                             help="Remove this uploaded bill"):
+                    del st.session_state["uploaded_bills"][_key]
+                    del st.session_state["uploaded_retrievers"][_key]
+                    st.rerun()
 
     st.divider()
 
@@ -744,7 +823,10 @@ with tab_rights:
             with st.spinner("Identifying applicable laws · Retrieving sections · Checking rights…"):
                 try:
                     from app.rights_checker import check_rights
-                    rc_result = check_rights(situation_input.strip())
+                    rc_result = check_rights(
+                        situation_input.strip(),
+                        uploaded_bills=st.session_state.get("uploaded_bills") or None,
+                    )
                     st.session_state["rc_result"] = rc_result
                 except Exception as e:
                     st.error(f"Error: {e}")
@@ -947,6 +1029,8 @@ with tab_conflicts:
         "telecom":         "Telecommunications Act 2023",
         "maha_rent":       "Maharashtra Rent Control Act 1999",
     }
+    for _uk, _ud in st.session_state.get("uploaded_bills", {}).items():
+        BILL_OPTS[_uk] = f"[Uploaded] {_ud['display_name']}"
 
     ca_col, cb_col = st.columns(2)
     with ca_col:
@@ -981,7 +1065,10 @@ with tab_conflicts:
         with st.spinner("Retrieving sections · Analysing conflicts · Verifying quotes…"):
             try:
                 from app.conflict_detector import detect_conflicts
-                conf_result = detect_conflicts(bill_a, bill_b, conflict_topic)
+                conf_result = detect_conflicts(
+                    bill_a, bill_b, conflict_topic,
+                    uploaded_bills=st.session_state.get("uploaded_bills") or None,
+                )
                 st.session_state["conf_result"] = conf_result
             except Exception as e:
                 st.error(f"Error: {e}")

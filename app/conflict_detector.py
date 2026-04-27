@@ -73,12 +73,16 @@ def detect_conflicts(
     bill_b_key: str,
     topic: str,
     top_k: int = 4,
+    uploaded_bills: Dict = None,
 ) -> Dict:
     """
     Detect conflicts and overlaps between two bills on a given topic.
+    uploaded_bills: optional dict of user-uploaded bills to include in the pool.
     Returns structured JSON with per-conflict grounding verification.
     """
     bills = load_all_bills()
+    if uploaded_bills:
+        bills = {**bills, **uploaded_bills}
 
     if bill_a_key not in bills or bill_b_key not in bills:
         return {"error": "One or both bills not found.", "conflicts": [], "overlaps": []}
