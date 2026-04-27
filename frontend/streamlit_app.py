@@ -141,7 +141,9 @@ with st.sidebar:
     )
 
 # ── Tabs ─────────────────────────────────────────────────────────────────────
-tab_explain, tab_browse = st.tabs(["Explain a Law", "Browse State Bills"])
+tab_explain, tab_browse, tab_rights, tab_conflicts = st.tabs([
+    "Explain a Law", "Browse State Bills", "Rights Checker", "Cross-Bill Analysis",
+])
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -701,3 +703,447 @@ with tab_browse:
         f'</div>',
         unsafe_allow_html=True,
     )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 3 — Rights Checker
+# ════════════════════════════════════════════════════════════════════════════
+with tab_rights:
+
+    st.markdown(
+        f'<div class="sh-card" style="border-left:3px solid #3b82f6;padding:1rem 1.25rem;'
+        f'margin-bottom:1rem;">'
+        f'<p class="sh-label" style="margin:0 0 0.25rem;color:#60a5fa;">HOW IT WORKS</p>'
+        f'<p style="margin:0;font-size:0.875rem;color:#d4d4d8;line-height:1.6;">'
+        f'Describe your situation in plain English. The tool finds which laws apply, '
+        f'retrieves relevant sections, and lists your rights — each backed by an exact '
+        f'quote from the statute. Every right is source-verified.'
+        f'</p></div>',
+        unsafe_allow_html=True,
+    )
+
+    situation_input = st.text_area(
+        "Describe your situation",
+        placeholder=(
+            "e.g. My employer has not paid my salary for two months and I was fired without notice.\n"
+            "e.g. The app shared my location data without asking me.\n"
+            "e.g. My landlord wants to evict me but I have paid all rent."
+        ),
+        height=110,
+        key="rights_situation",
+        label_visibility="collapsed",
+    )
+
+    rc_btn = st.button("Check My Rights", type="primary",
+                       use_container_width=True, key="rights_run_btn")
+
+    if rc_btn:
+        if not situation_input.strip():
+            st.warning("Please describe your situation first.")
+        else:
+            with st.spinner("Identifying applicable laws · Retrieving sections · Checking rights…"):
+                try:
+                    from app.rights_checker import check_rights
+                    rc_result = check_rights(situation_input.strip())
+                    st.session_state["rc_result"] = rc_result
+                except Exception as e:
+                    st.error(f"Error: {e}")
+                    st.session_state.pop("rc_result", None)
+
+    if "rc_result" in st.session_state:
+        rc = st.session_state["rc_result"]
+
+        if rc.get("error"):
+            st.markdown(notice_html(rc["error"], "error"), unsafe_allow_html=True)
+        else:
+            # Warning banner (distress / advice redirect)
+            if rc.get("_warning"):
+                st.markdown(notice_html(rc["_warning"], "warning"), unsafe_allow_html=True)
+
+            # Situation understood card
+            situation_text = rc.get("situation_understood", "")
+            if situation_text:
+                st.markdown(
+                    f'<div class="sh-card" style="padding:0.875rem 1.25rem;margin-bottom:0.75rem;">'
+                    f'<p class="sh-label" style="margin:0 0 0.2rem;">SITUATION UNDERSTOOD</p>'
+                    f'<p style="margin:0;font-size:0.875rem;color:{FG};">{situation_text}</p>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+            # Bills searched
+            bills_searched = rc.get("bills_searched", [])
+            if bills_searched:
+                badges = " ".join(
+                    f'<span class="sh-badge sh-badge-blue">{b}</span>' for b in bills_searched
+                )
+                st.markdown(
+                    f'<p class="sh-label" style="margin:0.25rem 0 0.3rem;">LAWS SEARCHED</p>'
+                    f'<div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.75rem;">'
+                    f'{badges}</div>',
+                    unsafe_allow_html=True,
+                )
+
+            gs = rc.get("grounding_summary", {})
+            n_rights = gs.get("total_rights", 0)
+            n_grounded = gs.get("grounded_rights", 0)
+
+            # Rights
+            rights = rc.get("your_rights", [])
+            if rights:
+                st.markdown(label_html(f"YOUR RIGHTS — {n_grounded}/{n_rights} SOURCE-VERIFIED"),
+                            unsafe_allow_html=True)
+
+                CONF_BADGE = {
+                    "clear":     ("sh-badge-green",  "CLEAR"),
+                    "likely":    ("sh-badge-amber",  "LIKELY"),
+                    "uncertain": ("sh-badge-red",    "UNCERTAIN"),
+                }
+
+                for right in rights:
+                    conf = right.get("confidence", "uncertain").lower()
+                    badge_cls, badge_txt = CONF_BADGE.get(conf, ("sh-badge-zinc", conf.upper()))
+                    grounded = right.get("grounded", False)
+                    src_badge = "sh-badge-green" if grounded else "sh-badge-amber"
+                    src_label = "VERIFIED" if grounded else "UNVERIFIED"
+
+                    right_text = right.get("right", "")
+                    label = right_text[:80] + ("…" if len(right_text) > 80 else "")
+
+                    with st.expander(label):
+                        st.markdown(
+                            f'<span class="sh-badge {badge_cls}">{badge_txt}</span> '
+                            f'<span class="sh-badge {src_badge}">{src_label}</span>',
+                            unsafe_allow_html=True,
+                        )
+                        st.markdown(
+                            f'<p style="margin:0.5rem 0 0.25rem;font-size:0.9375rem;'
+                            f'font-weight:600;color:{FG};">{right_text}</p>',
+                            unsafe_allow_html=True,
+                        )
+
+                        src_section = right.get("source_section", "")
+                        src_bill = right.get("source_bill", "")
+                        if src_section:
+                            st.markdown(
+                                f'<code style="background:#27272a;color:#a1a1aa;'
+                                f'padding:0.125rem 0.5rem;border-radius:0.25rem;'
+                                f'font-size:0.75rem;">{src_bill} — {src_section}</code>',
+                                unsafe_allow_html=True,
+                            )
+
+                        quote = right.get("source_quote", "")
+                        if quote:
+                            st.markdown(
+                                f'<blockquote style="border-left:2px solid #3f3f46;'
+                                f'padding-left:0.75rem;color:{MUTED_FG};'
+                                f'font-style:italic;margin:0.5rem 0;font-size:0.8125rem;">'
+                                f'"{quote}"</blockquote>',
+                                unsafe_allow_html=True,
+                            )
+
+                        meaning = right.get("what_this_means", "")
+                        if meaning:
+                            st.markdown(
+                                f'<p style="margin:0.25rem 0 0;font-size:0.8125rem;'
+                                f'color:#d4d4d8;">{meaning}</p>',
+                                unsafe_allow_html=True,
+                            )
+            else:
+                st.markdown(
+                    notice_html("No specific rights found in the retrieved sections for this situation.", "info"),
+                    unsafe_allow_html=True,
+                )
+
+            # Duties
+            duties = rc.get("your_duties", [])
+            if duties:
+                st.markdown(label_html("YOUR DUTIES"), unsafe_allow_html=True)
+                for duty in duties:
+                    with st.expander(duty.get("duty", "")[:80]):
+                        st.markdown(f"**{duty.get('duty', '')}**")
+                        quote = duty.get("source_quote", "")
+                        if quote:
+                            st.markdown(
+                                f'<blockquote style="border-left:2px solid #3f3f46;'
+                                f'padding-left:0.75rem;color:{MUTED_FG};'
+                                f'font-style:italic;margin:0.5rem 0;font-size:0.8125rem;">'
+                                f'"{quote}"</blockquote>',
+                                unsafe_allow_html=True,
+                            )
+
+            # What law doesn't cover
+            gap = rc.get("what_law_does_not_cover", "")
+            if gap:
+                st.markdown(label_html("WHAT THE LAW DOESN'T COVER"), unsafe_allow_html=True)
+                st.markdown(notice_html(gap, "warning"), unsafe_allow_html=True)
+
+            # Helplines
+            helplines = rc.get("helplines", [])
+            if helplines:
+                st.markdown(label_html("HELPLINES"), unsafe_allow_html=True)
+                for hl in helplines:
+                    st.markdown(
+                        f'<div class="sh-card" style="padding:0.625rem 1rem;">'
+                        f'<p style="margin:0;font-size:0.875rem;color:#4ade80;">{hl}</p>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+
+            # Sections reviewed
+            with st.expander("Sections reviewed"):
+                for s in rc.get("sections_reviewed", []):
+                    st.caption(s)
+
+            # Disclaimer
+            st.markdown(
+                notice_html(rc.get("disclaimer", ""), "info"),
+                unsafe_allow_html=True,
+            )
+
+            # Grounding summary
+            st.markdown(
+                f'<p style="font-size:0.75rem;color:{MUTED_FG};margin-top:0.5rem;">'
+                f'Source verification: {n_grounded}/{n_rights} rights confirmed in retrieved text.</p>',
+                unsafe_allow_html=True,
+            )
+
+    else:
+        st.markdown('<div style="margin-top:1rem;"></div>', unsafe_allow_html=True)
+        DEMO_SITUATIONS = [
+            "My employer fired me without giving me one month's notice",
+            "A food delivery app shared my location with advertisers without permission",
+            "My landlord wants to evict me even though I paid all my rent",
+            "The telecom company disconnected my SIM without warning",
+        ]
+        st.markdown(label_html("TRY THESE SITUATIONS"), unsafe_allow_html=True)
+        for demo in DEMO_SITUATIONS:
+            if st.button(demo, key=f"rc_demo_{demo}"):
+                st.session_state["rights_situation"] = demo
+                st.rerun()
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 4 — Cross-Bill Analysis
+# ════════════════════════════════════════════════════════════════════════════
+with tab_conflicts:
+
+    st.markdown(
+        f'<div class="sh-card" style="border-left:3px solid #f59e0b;padding:1rem 1.25rem;'
+        f'margin-bottom:1rem;">'
+        f'<p class="sh-label" style="margin:0 0 0.25rem;color:#fbbf24;">HOW IT WORKS</p>'
+        f'<p style="margin:0;font-size:0.875rem;color:#d4d4d8;line-height:1.6;">'
+        f'Select two bills and a topic. The tool retrieves the most relevant sections from '
+        f'each, then identifies genuine conflicts and overlaps — backed by exact source quotes. '
+        f'Every conflict quote is deterministically verified against retrieved text.'
+        f'</p></div>',
+        unsafe_allow_html=True,
+    )
+
+    BILL_OPTS = {
+        "dpdp":            "DPDP Act 2023",
+        "social_security": "Code on Social Security 2020",
+        "bns":             "Bharatiya Nyaya Sanhita 2023",
+        "telecom":         "Telecommunications Act 2023",
+        "maha_rent":       "Maharashtra Rent Control Act 1999",
+    }
+
+    ca_col, cb_col = st.columns(2)
+    with ca_col:
+        st.markdown(label_html("BILL A"), unsafe_allow_html=True)
+        bill_a = st.selectbox(
+            "Bill A", options=list(BILL_OPTS.keys()),
+            format_func=lambda k: BILL_OPTS[k],
+            key="conflict_bill_a", label_visibility="collapsed",
+        )
+    with cb_col:
+        st.markdown(label_html("BILL B"), unsafe_allow_html=True)
+        bill_b_opts = [k for k in BILL_OPTS if k != bill_a]
+        bill_b = st.selectbox(
+            "Bill B", options=bill_b_opts,
+            format_func=lambda k: BILL_OPTS[k],
+            key="conflict_bill_b", label_visibility="collapsed",
+        )
+
+    conflict_topic = st.text_input(
+        "Topic (optional)",
+        placeholder="e.g. data sharing  ·  worker rights  ·  definitions of personal data",
+        key="conflict_topic",
+        label_visibility="collapsed",
+    )
+
+    conf_btn = st.button(
+        "Detect Conflicts & Overlaps", type="primary",
+        use_container_width=True, key="conflict_run_btn",
+    )
+
+    if conf_btn:
+        with st.spinner("Retrieving sections · Analysing conflicts · Verifying quotes…"):
+            try:
+                from app.conflict_detector import detect_conflicts
+                conf_result = detect_conflicts(bill_a, bill_b, conflict_topic)
+                st.session_state["conf_result"] = conf_result
+            except Exception as e:
+                st.error(f"Error: {e}")
+                st.session_state.pop("conf_result", None)
+
+    if "conf_result" in st.session_state:
+        cr = st.session_state["conf_result"]
+
+        if cr.get("error"):
+            st.markdown(notice_html(cr["error"], "error"), unsafe_allow_html=True)
+        elif cr.get("insufficient_grounding"):
+            st.markdown(
+                notice_html(
+                    "The retrieved sections did not contain enough information to find "
+                    "genuine conflicts on this topic. Try a different topic or bill pair.",
+                    "warning",
+                ),
+                unsafe_allow_html=True,
+            )
+        else:
+            bill_a_name = cr.get("bill_a_name", "Bill A")
+            bill_b_name = cr.get("bill_b_name", "Bill B")
+            gs = cr.get("grounding_summary", {})
+            n_total = gs.get("total", 0)
+            n_grounded = gs.get("grounded", 0)
+
+            # Header card
+            st.markdown(
+                f'<div class="sh-card" style="display:flex;align-items:center;'
+                f'gap:1.25rem;padding:0.875rem 1.25rem;flex-wrap:wrap;">'
+                f'<span class="sh-badge sh-badge-blue">{bill_a_name}</span>'
+                f'<span style="color:{MUTED_FG};font-size:0.875rem;">vs</span>'
+                f'<span class="sh-badge sh-badge-blue">{bill_b_name}</span>'
+                f'{"<span class=sh-badge sh-badge-zinc>" + cr.get("topic","") + "</span>" if cr.get("topic") else ""}'
+                f'<span style="margin-left:auto;" class="sh-badge '
+                f'{"sh-badge-green" if n_grounded == n_total and n_total > 0 else "sh-badge-amber"}">'
+                f'{n_grounded}/{n_total} verified</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+            # Conflict type styling
+            CTYPE_BADGE = {
+                "direct_contradiction": ("sh-badge-red",   "DIRECT CONTRADICTION"),
+                "scope_overlap":        ("sh-badge-amber",  "SCOPE OVERLAP"),
+                "definitional_conflict":("sh-badge-amber",  "DEFINITIONAL CONFLICT"),
+                "procedural_gap":       ("sh-badge-blue",   "PROCEDURAL GAP"),
+            }
+
+            conflicts = cr.get("conflicts", [])
+            st.markdown(label_html(f"CONFLICTS FOUND ({len(conflicts)})"), unsafe_allow_html=True)
+
+            if not conflicts:
+                st.markdown(
+                    notice_html("No direct conflicts found in the retrieved sections.", "info"),
+                    unsafe_allow_html=True,
+                )
+            else:
+                for c in conflicts:
+                    ctype = c.get("conflict_type", "")
+                    badge_cls, badge_txt = CTYPE_BADGE.get(
+                        ctype, ("sh-badge-zinc", ctype.replace("_", " ").upper())
+                    )
+                    grounded = c.get("grounded", False)
+                    src_badge = "sh-badge-green" if grounded else "sh-badge-amber"
+                    src_label = "VERIFIED" if grounded else "UNVERIFIED"
+                    title = c.get("title", "Conflict")
+
+                    with st.expander(title):
+                        st.markdown(
+                            f'<span class="sh-badge {badge_cls}">{badge_txt}</span> '
+                            f'<span class="sh-badge {src_badge}">{src_label}</span>',
+                            unsafe_allow_html=True,
+                        )
+
+                        # Side-by-side quotes
+                        qa, qb = st.columns(2)
+                        with qa:
+                            st.markdown(
+                                f'<p class="sh-label" style="margin:0.625rem 0 0.25rem;">'
+                                f'{bill_a_name} — {c.get("bill_a_section","")}</p>'
+                                f'<blockquote style="border-left:2px solid #3b82f6;'
+                                f'padding-left:0.75rem;color:{MUTED_FG};'
+                                f'font-style:italic;margin:0;font-size:0.8125rem;">'
+                                f'"{c.get("bill_a_quote","")}"'
+                                f'{"<br><span class=sh-badge sh-badge-green style=margin-top:0.4rem;display:inline-block;>QUOTE VERIFIED</span>" if c.get("quote_a_verified") else "<br><span class=sh-badge sh-badge-amber style=margin-top:0.4rem;display:inline-block;>NOT IN RETRIEVED TEXT</span>"}'
+                                f'</blockquote>',
+                                unsafe_allow_html=True,
+                            )
+                        with qb:
+                            st.markdown(
+                                f'<p class="sh-label" style="margin:0.625rem 0 0.25rem;">'
+                                f'{bill_b_name} — {c.get("bill_b_section","")}</p>'
+                                f'<blockquote style="border-left:2px solid #f59e0b;'
+                                f'padding-left:0.75rem;color:{MUTED_FG};'
+                                f'font-style:italic;margin:0;font-size:0.8125rem;">'
+                                f'"{c.get("bill_b_quote","")}"'
+                                f'{"<br><span class=sh-badge sh-badge-green style=margin-top:0.4rem;display:inline-block;>QUOTE VERIFIED</span>" if c.get("quote_b_verified") else "<br><span class=sh-badge sh-badge-amber style=margin-top:0.4rem;display:inline-block;>NOT IN RETRIEVED TEXT</span>"}'
+                                f'</blockquote>',
+                                unsafe_allow_html=True,
+                            )
+
+                        plain = c.get("plain_english", "")
+                        impact = c.get("citizen_impact", "")
+                        if plain:
+                            st.markdown(
+                                f'<p style="margin:0.75rem 0 0.25rem;font-size:0.875rem;'
+                                f'color:{FG};">{plain}</p>',
+                                unsafe_allow_html=True,
+                            )
+                        if impact:
+                            st.markdown(notice_html(f"Citizen impact: {impact}", "info"),
+                                        unsafe_allow_html=True)
+
+            # Overlaps
+            overlaps = cr.get("overlaps", [])
+            if overlaps:
+                st.markdown(label_html(f"OVERLAPS ({len(overlaps)})"), unsafe_allow_html=True)
+                for ov in overlaps:
+                    with st.expander(ov.get("title", "Overlap")):
+                        st.markdown(
+                            f'<p style="font-size:0.875rem;color:{FG};">'
+                            f'{ov.get("plain_english","")}</p>'
+                            f'<p style="font-size:0.75rem;color:{MUTED_FG};margin-top:0.25rem;">'
+                            f'{bill_a_name}: {ov.get("bill_a_section","")} · '
+                            f'{bill_b_name}: {ov.get("bill_b_section","")}</p>',
+                            unsafe_allow_html=True,
+                        )
+
+            # Gaps
+            gaps = cr.get("gaps", [])
+            if gaps:
+                st.markdown(label_html("GAPS IN THE LAW"), unsafe_allow_html=True)
+                for gap in gaps:
+                    st.markdown(
+                        f'<p style="font-size:0.875rem;color:{MUTED_FG};'
+                        f'border-left:2px solid #3f3f46;padding-left:0.75rem;'
+                        f'margin-bottom:0.4rem;">{gap}</p>',
+                        unsafe_allow_html=True,
+                    )
+
+            # Confidence + grounding note
+            conf_lvl = cr.get("confidence", "")
+            st.markdown(
+                f'<p style="font-size:0.75rem;color:{MUTED_FG};margin-top:0.75rem;">'
+                f'Confidence: <strong style="color:{FG};">{conf_lvl}</strong> · '
+                f'Quote verification: <strong style="color:{FG};">{n_grounded}/{n_total}</strong> '
+                f'conflict pairs confirmed in retrieved source text.</p>',
+                unsafe_allow_html=True,
+            )
+
+    else:
+        st.markdown('<div style="margin-top:1rem;"></div>', unsafe_allow_html=True)
+        DEMO_PAIRS = [
+            ("dpdp", "telecom", "data sharing and personal information"),
+            ("dpdp", "social_security", "worker data and platform obligations"),
+            ("bns", "telecom", "interception and surveillance"),
+        ]
+        st.markdown(label_html("TRY THESE COMPARISONS"), unsafe_allow_html=True)
+        for a, b, topic_demo in DEMO_PAIRS:
+            label_str = f"{BILL_OPTS[a]} vs {BILL_OPTS[b]} — {topic_demo}"
+            if st.button(label_str, key=f"conf_demo_{a}_{b}"):
+                st.session_state["conflict_bill_a"] = a
+                st.session_state["conflict_topic"] = topic_demo
+                st.rerun()
