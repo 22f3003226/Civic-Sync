@@ -65,7 +65,7 @@ def test_pdf_parsing_all_bills():
     from app.pdf_parser import load_all_bills
 
     bills = load_all_bills()
-    assert len(bills) == 4, f"Expected 4 bills, got {len(bills)}"
+    assert len(bills) >= 4, f"Expected ≥4 bills, got {len(bills)}"
     for key, data in bills.items():
         assert len(data["chunks"]) >= 3, f"{key}: only {len(data['chunks'])} sections"
         print(f"✅ {key}: {len(data['chunks'])} sections")

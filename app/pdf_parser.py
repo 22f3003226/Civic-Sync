@@ -26,6 +26,7 @@ BILL_PATHS: Dict[str, str] = {
     "social_security": "bills/Code on Social Security 2020.pdf",
     "bns": "bills/Bharatiya Nyaya Sanhita 2023.pdf",
     "telecom": "bills/Telecommunications Act 2023.pdf",
+    "maha_rent": "bills/Maharashtra Rent Control Act 1999.txt",
 }
 
 BILL_DISPLAY_NAMES: Dict[str, str] = {
@@ -33,13 +34,25 @@ BILL_DISPLAY_NAMES: Dict[str, str] = {
     "social_security": "Code on Social Security 2020",
     "bns": "Bharatiya Nyaya Sanhita 2023",
     "telecom": "Telecommunications Act 2023",
+    "maha_rent": "Maharashtra Rent Control Act 1999",
+}
+
+BILL_TAGS: Dict[str, str] = {
+    "dpdp": "Central",
+    "social_security": "Central",
+    "bns": "Central",
+    "telecom": "Central",
+    "maha_rent": "⭐ State · Maharashtra",
 }
 
 
-def extract_bill_text(pdf_path: str) -> str:
-    """Extract full text from a bill PDF using pdfplumber."""
+def extract_bill_text(path: str) -> str:
+    """Extract full text from a bill PDF or plain-text file."""
+    if path.endswith(".txt"):
+        with open(path, encoding="utf-8") as f:
+            return f.read()
     pages = []
-    with pdfplumber.open(pdf_path) as pdf:
+    with pdfplumber.open(path) as pdf:
         for page in pdf.pages:
             text = page.extract_text()
             if text:
@@ -132,6 +145,7 @@ def load_all_bills() -> Dict[str, Dict]:
                 "chunks": chunks,
                 "path": path,
                 "display_name": BILL_DISPLAY_NAMES[key],
+                "tag": BILL_TAGS.get(key, "Central"),
             }
         except Exception as e:
             print(f"❌ Failed to load {key}: {e}")
