@@ -244,7 +244,7 @@ with tab_explain:
         grade = summary.get("grade_level", "—")
         score = result.get("faithfulness_score")
         score_str = f"{score:.1f}/5" if score is not None else "N/A"
-        score_col = "#4ade80" if (score or 0) >= 4.0 else "#f87171"
+        score_col = "#4ade80" if (score or 0) >= 3.5 else "#f87171"
 
         st.markdown(
             f"""

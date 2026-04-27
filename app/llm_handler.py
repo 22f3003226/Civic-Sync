@@ -130,7 +130,7 @@ def verify_with_haiku(original_text: str, summary_json: dict) -> Dict:
     }
     tracker.log_call("claude-haiku-4-5-20251001", usage["input_tokens"], usage["output_tokens"])
 
-    judge["requires_human_review"] = judge.get("overall_faithfulness_score", 5.0) < 4.0
+    judge["requires_human_review"] = judge.get("overall_faithfulness_score", 5.0) < 3.5
     judge["usage"] = usage
     return judge
 

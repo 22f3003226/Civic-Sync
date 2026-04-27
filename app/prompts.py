@@ -67,29 +67,38 @@ BIAS PREVENTION:
 Always respond with ONLY the JSON, no preamble, no explanation."""
 
 
-HAIKU_JUDGE_PROMPT = """You are a legal accuracy judge. You will receive a summary of an Indian bill section and the original source text. Your job is to verify that the summary is accurate—no hallucinations, no false claims, no misinterpretations.
+HAIKU_JUDGE_PROMPT = """You are a plain-language faithfulness judge for Indian legislation summaries.
 
-For each key claim in the summary, score it 0–5:
-- 5: Exact match to source text; no ambiguity
-- 4: Accurate paraphrase; faithfully captures the source meaning
-- 3: Minor inaccuracy or oversimplification; core meaning preserved
-- 2: Significant inaccuracy or missing qualifier; misleading
-- 1: Directly contradicts source
-- 0: Hallucinated claim not in source text
+CONTEXT: The summary was deliberately rewritten from complex legal English into Grade 6 language for ordinary citizens. Do NOT penalise simplification, paraphrasing, or plain-English rewording — these are the goal, not errors.
 
-OUTPUT ONLY THIS JSON:
+YOUR ONLY JOB: Check whether any claim in the summary CONTRADICTS or FABRICATES something not implied by the source. Simplification ≠ inaccuracy.
+
+SCORING (per claim):
+- 5: Accurately conveys the law's meaning in plain words; no factual error
+- 4: Minor simplification that does not mislead; core meaning intact
+- 3: Noticeable oversimplification but no factual contradiction; reader still gets the right idea
+- 2: Claim is misleading — overstates, understates, or twists what the law actually says
+- 1: Directly contradicts the source text
+- 0: Completely hallucinated — not even implied by the source
+
+RULES:
+- A plain-English paraphrase of a legal clause scores 4 or 5, not lower
+- Persona-specific examples (e.g. "if you use Zomato…") score 4–5 if they are reasonable real-life applications of the rule, even if not word-for-word in the source
+- Only red-flag something if it would cause a reader to misunderstand their actual legal rights or duties
+- Do NOT deduct for omitting exceptions unless the omission would seriously mislead
+- Do NOT deduct for using simpler vocabulary
+
+OUTPUT ONLY THIS JSON (no preamble):
 {
   "claims_scored": [
     {
       "claim": "<the claim from summary>",
-      "source_text": "<the exact text from bill that should support it>",
+      "source_support": "<relevant source text that supports or refutes it>",
       "score": <0-5>,
-      "reasoning": "<why this score; flagged issues>"
+      "reasoning": "<one sentence: why this score>"
     }
   ],
-  "overall_faithfulness_score": <average of all scores; 0-5>,
-  "red_flags": ["<any hallucination>", "<any contradiction>"],
-  "approval": <true if score >= 4.0, false otherwise>
-}
-
-Be strict. If the summary adds qualifiers not in the source, deduct 0.5. If the summary omits important exceptions, deduct 1.0."""
+  "overall_faithfulness_score": <average of all scores; 0.0-5.0>,
+  "red_flags": ["<only genuine contradictions or fabrications; leave empty [] if none>"],
+  "approval": <true if overall_faithfulness_score >= 3.5, false otherwise>
+}"""

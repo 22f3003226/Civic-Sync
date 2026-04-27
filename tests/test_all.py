@@ -115,6 +115,7 @@ def test_prompts_loaded():
     assert "grade_level" in SONNET_SYSTEM_PROMPT
     assert len(HAIKU_JUDGE_PROMPT) > 200
     assert "overall_faithfulness_score" in HAIKU_JUDGE_PROMPT
+    assert "3.5" in HAIKU_JUDGE_PROMPT  # threshold check
     print("✅ Prompts: Both system prompts loaded and contain expected fields")
 
 
