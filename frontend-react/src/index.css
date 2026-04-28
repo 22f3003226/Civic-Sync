@@ -1,0 +1,199 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    background-color: #07080d;
+    color: #eef2f7;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Grain overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  ::-webkit-scrollbar        { width: 5px; }
+  ::-webkit-scrollbar-track  { background: transparent; }
+  ::-webkit-scrollbar-thumb  { background: #1e2535; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2d3a52; }
+}
+
+@layer components {
+
+  /* ── Cards ── */
+  .card {
+    @apply rounded-xl border border-white/[0.07] transition-all duration-300;
+    background: linear-gradient(145deg, rgba(19,22,31,0.92), rgba(14,16,24,0.96));
+  }
+  .card-hover:hover {
+    @apply -translate-y-0.5 shadow-card;
+    border-color: rgba(245,158,11,0.22);
+    box-shadow: 0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(245,158,11,0.07);
+  }
+  .card-flat {
+    @apply rounded-xl border border-white/[0.07];
+    background: linear-gradient(145deg, rgba(19,22,31,0.92), rgba(14,16,24,0.96));
+  }
+
+  /* ── Badges ── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-bold tracking-wider uppercase;
+  }
+  .badge-central    { @apply bg-indigo-500/15 text-indigo-300 border border-indigo-500/30; }
+  .badge-state      { @apply bg-violet/15      text-purple-300 border border-purple-500/30; }
+  .badge-ok         { @apply bg-emerald-500/15 text-emerald-300 border border-emerald-500/30; }
+  .badge-warn       { @apply bg-amber-500/15   text-amber-300   border border-amber-500/30; }
+  .badge-err        { @apply bg-red-500/15     text-red-300     border border-red-500/30; }
+  .badge-grade      { @apply bg-indigo-500/10  text-indigo-200  border border-indigo-500/20 font-mono; }
+  .badge-uploaded   { @apply bg-orange-500/15  text-orange-300  border border-orange-500/30; }
+  .badge-clear      { @apply bg-emerald-500/15 text-emerald-300 border border-emerald-500/30; }
+  .badge-likely     { @apply bg-amber-500/15   text-amber-300   border border-amber-500/30; }
+  .badge-uncertain  { @apply bg-red-500/15     text-red-300     border border-red-500/30; }
+  /* conflict */
+  .badge-contradiction { @apply bg-red-500/15     text-red-300     border border-red-500/30; }
+  .badge-overlap       { @apply bg-amber-500/15   text-amber-300   border border-amber-500/30; }
+  .badge-definitional  { @apply bg-indigo-500/15  text-indigo-300  border border-indigo-500/30; }
+  .badge-procedural    { @apply bg-violet/15      text-purple-300  border border-purple-500/30; }
+
+  /* ── Buttons ── */
+  .btn-amber {
+    @apply px-5 py-2 rounded-lg font-semibold text-[0.85rem] border-none cursor-pointer transition-all duration-200;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #07080d;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-amber:hover {
+    @apply -translate-y-px shadow-amber;
+    filter: brightness(1.08);
+  }
+  .btn-amber:disabled {
+    @apply opacity-50 translate-y-0 cursor-not-allowed;
+    filter: none;
+  }
+  .btn-ghost {
+    @apply px-4 py-2 rounded-lg text-ink-2 border border-white/[0.07] bg-white/[0.03]
+           cursor-pointer text-[0.85rem] transition-all duration-200;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-ghost:hover { @apply bg-white/[0.07] text-ink-1 border-white/[0.14]; }
+
+  /* ── Form controls ── */
+  .field {
+    @apply w-full rounded-lg border border-white/[0.07] text-ink-1 text-[0.85rem] px-3 py-2
+           outline-none transition-all duration-200;
+    background: rgba(10,11,16,0.85);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .field:focus {
+    border-color: rgba(99,102,241,0.5);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+  }
+  select.field { padding-right: 2rem; appearance: none; }
+  select.field option { background: #141720; }
+  textarea.field { resize: vertical; min-height: 100px; line-height: 1.65; }
+
+  /* ── Source quote ── */
+  .source-quote {
+    @apply text-[0.74rem] leading-relaxed px-3 py-2 rounded-r-md my-1;
+    font-family: 'JetBrains Mono', monospace;
+    color: #a8bbd4;
+    background: rgba(99,102,241,0.04);
+    border-left: 3px solid #f59e0b;
+  }
+
+  /* ── Score ring ── */
+  .ring-green { @apply w-12 h-12 rounded-full flex items-center justify-center font-mono text-sm font-semibold shrink-0 bg-emerald-500/12 border-2 border-emerald-500/35 text-emerald-300; }
+  .ring-blue  { @apply w-12 h-12 rounded-full flex items-center justify-center font-mono text-sm font-semibold shrink-0 bg-indigo-500/12  border-2 border-indigo-500/35  text-indigo-300; }
+
+  /* ── Progress bar ── */
+  .pbar-track { @apply h-[3px] rounded-full bg-white/[0.07] overflow-hidden; }
+  .pbar-fill  {
+    @apply h-full rounded-full transition-all duration-500;
+    background: linear-gradient(90deg, #f59e0b, #f97316);
+  }
+
+  /* ── Section label ── */
+  .sec-label {
+    @apply block text-[0.62rem] text-ink-3 tracking-[0.1em] uppercase font-bold mb-2;
+  }
+
+  /* ── Upload zone ── */
+  .upload-zone {
+    @apply rounded-xl border-2 border-dashed border-white/10 bg-white/[0.02]
+           p-4 text-center cursor-pointer transition-all duration-200;
+  }
+  .upload-zone:hover {
+    border-color: rgba(245,158,11,0.3);
+    background: rgba(245,158,11,0.03);
+  }
+
+  /* ── Table row ── */
+  .trow {
+    @apply grid gap-4 px-4 py-3 border-b border-white/[0.07] items-center transition-colors duration-150;
+    grid-template-columns: 1fr 130px 70px 90px;
+  }
+  .trow:hover { background: rgba(255,255,255,0.025); }
+
+  /* ── Persona pill ── */
+  .persona-pill {
+    @apply px-2 py-1.5 rounded-lg text-[0.75rem] cursor-pointer border border-white/[0.07]
+           bg-white/[0.03] text-ink-2 transition-all duration-150 text-center;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .persona-pill.active {
+    background: rgba(245,158,11,0.12);
+    border-color: rgba(245,158,11,0.35);
+    color: #fcd34d;
+  }
+
+  /* ── NA card (not applicable) ── */
+  .card-na {
+    border-left: 4px solid #f97316;
+    background: rgba(249,115,22,0.04);
+  }
+
+  /* ── Loading dots ── */
+  .dot { @apply inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mx-0.5; }
+  .dot:nth-child(1) { animation: dots 1.4s infinite 0s; }
+  .dot:nth-child(2) { animation: dots 1.4s infinite 0.2s; }
+  .dot:nth-child(3) { animation: dots 1.4s infinite 0.4s; }
+
+  @keyframes dots {
+    0%, 80%, 100% { transform: scale(0.4); opacity: 0.3; }
+    40%           { transform: scale(1);   opacity: 1;   }
+  }
+
+  /* ── Divider ── */
+  .divider {
+    @apply flex items-center gap-3 my-4 text-ink-3 text-[0.65rem] tracking-widest uppercase;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.07);
+  }
+
+  /* ── Toggle ── */
+  .toggle {
+    @apply w-8 h-[18px] rounded-full cursor-pointer relative transition-all duration-200 shrink-0;
+    background: rgba(255,255,255,0.1);
+  }
+  .toggle::after {
+    content: '';
+    @apply absolute w-3.5 h-3.5 rounded-full bg-white top-0.5 left-0.5 transition-all duration-200;
+  }
+  .toggle.on { background: #f59e0b; }
+  .toggle.on::after { left: calc(100% - 16px); }
+}
