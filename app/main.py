@@ -25,7 +25,7 @@ from app.cost_tracker import tracker
 
 import textstat
 
-app = FastAPI(title="Policy Explainer", version="1.0.0")
+app = FastAPI(title="CivicSync", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
