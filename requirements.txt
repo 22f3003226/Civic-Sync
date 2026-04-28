@@ -10,7 +10,7 @@ textstat==0.7.3
 rank-bm25==0.2.2
 
 anthropic==0.49.0
-voyageai==0.3.2
+voyageai==0.2.4
 
 python-dotenv==1.0.0
 requests==2.31.0
