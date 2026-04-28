@@ -31,12 +31,12 @@ function ConflictCard({ conflict, billAName, billBName }) {
       <div className="flex items-center gap-2 px-4 py-2.5 border-b"
            style={{ background: bgColors[conflict.conflict_type] || 'transparent', borderColor: borderColors[conflict.conflict_type] }}>
         <ConflictTypeBadge type={conflict.conflict_type} />
-        <span className="text-[0.82rem] font-semibold text-ink-1">{conflict.description}</span>
+        <span className="text-[0.92rem] font-semibold text-ink-1">{conflict.description}</span>
       </div>
       <div className="p-4 grid grid-cols-2 gap-4">
         <div>
           <div className="text-[0.62rem] text-indigo-300 uppercase font-bold tracking-wider mb-2">{billAName}</div>
-          <p className="text-[0.78rem] text-ink-2 leading-relaxed mb-2">{conflict.bill_a_provision}</p>
+          <p className="text-[0.88rem] text-ink-2 leading-relaxed mb-2">{conflict.bill_a_provision}</p>
           <SourceQuote>{conflict.bill_a_quote}</SourceQuote>
           <div className="mt-1.5">
             {conflict.quote_a_verified
@@ -46,7 +46,7 @@ function ConflictCard({ conflict, billAName, billBName }) {
         </div>
         <div>
           <div className="text-[0.62rem] text-indigo-300 uppercase font-bold tracking-wider mb-2">{billBName}</div>
-          <p className="text-[0.78rem] text-ink-2 leading-relaxed mb-2">{conflict.bill_b_provision}</p>
+          <p className="text-[0.88rem] text-ink-2 leading-relaxed mb-2">{conflict.bill_b_provision}</p>
           <SourceQuote>{conflict.bill_b_quote}</SourceQuote>
           <div className="mt-1.5">
             {conflict.quote_b_verified
@@ -94,8 +94,8 @@ export default function CrossBillTab({ bills }) {
 
   return (
     <div className="max-w-[980px] mx-auto">
-      <h2 className="font-display text-[1.45rem] text-ink-1 mb-1">Cross-Bill Conflict Detector</h2>
-      <p className="text-[0.82rem] text-ink-2 mb-5 leading-relaxed">
+      <h2 className="font-display text-[1.65rem] text-ink-1 mb-1">Cross-Bill Conflict Detector</h2>
+      <p className="text-[0.92rem] text-ink-2 mb-5 leading-relaxed">
         Compare two bills for conflicts, overlaps, and definitional clashes. Every conflict requires verified quotes from both laws.
       </p>
 

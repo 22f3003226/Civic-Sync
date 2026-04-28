@@ -8,13 +8,13 @@ function RightCard({ right }) {
   return (
     <div className="card card-hover rounded-xl p-4">
       <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
-        <div className="text-[0.88rem] font-semibold text-ink-1 leading-snug">{right.right}</div>
+        <div className="text-[0.95rem] font-semibold text-ink-1 leading-snug">{right.right}</div>
         <div className="flex gap-1.5 shrink-0 flex-wrap">
           <ConfidenceBadge confidence={right.confidence} />
           <GroundedBadge grounded={right.grounded} />
         </div>
       </div>
-      <p className="text-[0.8rem] text-ink-2 leading-relaxed mb-2">{right.explanation}</p>
+      <p className="text-[0.88rem] text-ink-2 leading-relaxed mb-2">{right.explanation}</p>
       {right.source_quote && <SourceQuote>{right.source_quote}</SourceQuote>}
       {right.action_info && (
         <p className="text-[0.74rem] text-amber-300 mt-2">ℹ {right.action_info}</p>
@@ -27,10 +27,10 @@ function DutyCard({ duty }) {
   return (
     <div className="card rounded-xl p-4" style={{ borderColor: 'rgba(245,158,11,0.15)' }}>
       <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
-        <div className="text-[0.85rem] font-semibold text-amber-300">{duty.duty}</div>
+        <div className="text-[0.92rem] font-semibold text-amber-300">{duty.duty}</div>
         <GroundedBadge grounded={duty.grounded} />
       </div>
-      <p className="text-[0.8rem] text-ink-2 leading-relaxed">{duty.explanation}</p>
+      <p className="text-[0.88rem] text-ink-2 leading-relaxed">{duty.explanation}</p>
       {duty.source_quote && <SourceQuote>{duty.source_quote}</SourceQuote>}
     </div>
   )
@@ -62,8 +62,8 @@ export default function RightsTab({ uploadedBillKey }) {
 
   return (
     <div className="max-w-[820px] mx-auto">
-      <h2 className="font-display text-[1.45rem] text-ink-1 mb-1">What are your rights?</h2>
-      <p className="text-[0.82rem] text-ink-2 mb-5 leading-relaxed">
+      <h2 className="font-display text-[1.65rem] text-ink-1 mb-1">What are your rights?</h2>
+      <p className="text-[0.92rem] text-ink-2 mb-5 leading-relaxed">
         Describe your situation. We identify which laws apply and extract your rights — with exact source quotes, deterministically verified.
       </p>
 

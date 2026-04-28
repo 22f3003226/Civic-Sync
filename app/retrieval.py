@@ -12,7 +12,8 @@ except ImportError:
     _VOYAGE_AVAILABLE = False
 
 
-EMBED_CACHE_PATH = "data/embeddings_cache.json"
+EMBED_CACHE_PATH    = "data/embeddings_cache.json"
+DENSE_INDEX_DIR     = "data/dense_indices"
 
 # ── Module-level singleton ────────────────────────────────────────────────────
 # Loaded ONCE and shared across ALL HybridRetriever instances.
@@ -116,11 +117,28 @@ class HybridRetriever:
         results.sort(key=lambda x: x[0])
         return np.array([r[1] for r in results], dtype=np.float32)
 
+    def _index_path(self) -> str:
+        return os.path.join(DENSE_INDEX_DIR, f"{self.bill_key}.npy")
+
     def _build_dense_index(self) -> None:
+        path = self._index_path()
+        # Load from disk if it exists and matches the current corpus size
+        if os.path.exists(path):
+            loaded = np.load(path)
+            if loaded.shape[0] == len(self.corpus):
+                self._embeddings = loaded
+                print(f"  Dense index loaded from disk for {self.bill_key} ({len(self.corpus)} sections)")
+                return
+            # Shape mismatch means corpus changed — fall through to rebuild
+
         print(f"  Building dense index for {self.bill_key} ({len(self.corpus)} sections)…")
         self._embeddings = self._embed_texts(self.corpus, input_type="document")
         norms = np.linalg.norm(self._embeddings, axis=1, keepdims=True) + 1e-8
         self._embeddings = self._embeddings / norms
+
+        os.makedirs(DENSE_INDEX_DIR, exist_ok=True)
+        np.save(path, self._embeddings)
+        print(f"  Dense index saved to disk for {self.bill_key}")
 
     def _bm25_ranks(self, query: str, top_n: int) -> List[Tuple[int, float]]:
         scores = self.bm25.get_scores(query.lower().split())
