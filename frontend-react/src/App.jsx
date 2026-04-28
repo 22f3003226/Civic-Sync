@@ -4,12 +4,14 @@ import ExplainTab from './tabs/ExplainTab.jsx'
 import RightsTab from './tabs/RightsTab.jsx'
 import CrossBillTab from './tabs/CrossBillTab.jsx'
 import BrowseTab from './tabs/BrowseTab.jsx'
+import VerdictTab from './tabs/VerdictTab.jsx'
 
 const TABS = [
-  { id: 'explain',  label: 'Explain a Law'      },
-  { id: 'rights',   label: 'Rights Checker'      },
-  { id: 'cross',    label: 'Cross-Bill Analysis' },
-  { id: 'browse',   label: 'Browse State Bills'  },
+  { id: 'explain', label: 'Explain a Law'        },
+  { id: 'rights',  label: 'Rights Checker'        },
+  { id: 'cross',   label: 'Cross-Bill Analysis'   },
+  { id: 'verdict', label: 'Policy Verdict'        },
+  { id: 'browse',  label: 'Browse State Bills'    },
 ]
 
 export default function App() {
@@ -122,6 +124,7 @@ export default function App() {
         )}
         {activeTab === 'rights'  && <RightsTab uploadedBillKey={uploadedBill?.key} />}
         {activeTab === 'cross'   && <CrossBillTab bills={allBills} />}
+        {activeTab === 'verdict' && <VerdictTab bills={allBills} />}
         {activeTab === 'browse'  && <BrowseTab />}
       </main>
 

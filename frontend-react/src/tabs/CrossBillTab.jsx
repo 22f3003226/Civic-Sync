@@ -115,7 +115,7 @@ export default function CrossBillTab({ bills }) {
               </svg>
             </div>
           </div>
-          <div className="flex items-end justify-center pb-2.5 text-ink-3 text-xl">⚔</div>
+          <div className="flex items-end justify-center pb-2.5 text-ink-3 text-[0.7rem] font-bold tracking-widest">VS</div>
           <div>
             <label className="text-[0.74rem] text-ink-2 font-medium block mb-1.5">Bill B</label>
             <div className="relative">
