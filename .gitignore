@@ -27,3 +27,9 @@ ngrok-v3-stable-linux-amd64.zip
 .agents/
 skills-lock.json
 docs/
+CLAUDE.md
+.streamlit/
+frontend/
+scripts/
+tests/
+civicsync/
