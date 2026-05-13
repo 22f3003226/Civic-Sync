@@ -10,3 +10,4 @@ voyageai==0.2.4
 python-dotenv==1.0.0
 requests==2.31.0
 numpy==1.26.4
+aiofiles==23.2.1

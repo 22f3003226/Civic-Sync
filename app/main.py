@@ -6,6 +6,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 load_dotenv()
@@ -280,6 +281,11 @@ async def upload_pdf(file: UploadFile = File(...)):
     }
 
 
+_DIST = "frontend-react/dist"
+if os.path.exists(_DIST):
+    app.mount("/", StaticFiles(directory=_DIST, html=True), name="static")
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=7860, reload=True)

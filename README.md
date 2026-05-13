@@ -1,4 +1,13 @@
-# Policy Explainer
+---
+title: CivicSync
+emoji: ⚖️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+---
+
+# CivicSync — Policy Explainer
 
 **Indian legislation in plain language — built for the Anthropic Hackathon (Track 4: Governance & Collaboration)**
 

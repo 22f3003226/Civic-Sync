@@ -1,5 +1,6 @@
-// In production (Vercel), VITE_API_URL is set to the Render backend URL.
-// In local dev, it falls back to '/api' which Vite proxies to localhost:8000.
+// In production (HF Spaces), VITE_API_URL is "" — FastAPI serves the React build,
+// so API calls go to the same origin (no prefix needed).
+// In local dev, falls back to '/api' which Vite proxies to localhost:8000.
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
 async function req(method, path, { params, body, form } = {}) {

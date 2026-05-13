@@ -5,8 +5,8 @@ from datetime import datetime
 
 class KeyProvision(BaseModel):
     provision: str
-    source_section: str
-    concrete_example: str
+    source_section: Optional[str] = None
+    concrete_example: Optional[str] = None
 
 
 class Ambiguity(BaseModel):

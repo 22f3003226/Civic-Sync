@@ -1,18 +1,29 @@
+# Secrets
 .env
+.streamlit/secrets.toml
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
-.DS_Store
-.streamlit/secrets.toml
-data/*.json
-!data/embeddings_cache.json
-!data/bill_chunks_cache.json
-data/dense_indices/
 *.egg-info/
 .venv/
 venv/
-docs/PRESENTATION_GUIDE.md
+.pytest_cache/
+
+# Data (large / regenerated at runtime)
+data/embeddings_cache.json
+data/dense_indices/
+
+# Node
 node_modules/
 frontend-react/dist/
 frontend-react/.vite/
 
+# Misc
+.DS_Store
+ngrok-v3-stable-linux-amd64.zip
+.devcontainer/
+.agents/
+skills-lock.json
+docs/
