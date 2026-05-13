@@ -13,7 +13,7 @@ pinned: false
 
 **Indian legislation in plain language, built for 1.4 billion people who can't read it.**
 
-🔴 **[Live Demo](https://xytan2022-civicsync.hf.space)** &nbsp;|&nbsp; 💻 **[GitHub](https://github.com/22f3003226/CivicSync)**
+🔴 **[Live Demo](https://xytan2022-civicsync.hf.space)** &nbsp;|&nbsp; 💻 **[GitHub](https://github.com/22f3003226/Civic-Sync)**
 
 ---
 
